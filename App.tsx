@@ -1,17 +1,34 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import AgentForm from './components/AgentForm';
 import PositionForm from './components/PositionForm';
 import SmartMatching from './components/SmartMatching';
 import { Agent, PositionRequest, PositionStatus } from './types';
-import { MOCK_AGENTS, MOCK_POSITIONS } from './constants';
+import { getAgents, getPositions, saveAgent, savePosition } from './services/apiService';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'supply' | 'demand' | 'matching'>('dashboard');
-  const [agents, setAgents] = useState<Agent[]>(MOCK_AGENTS as Agent[]);
-  const [positions, setPositions] = useState<PositionRequest[]>(MOCK_POSITIONS as PositionRequest[]);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [positions, setPositions] = useState<PositionRequest[]>([]);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [agentsData, positionsData] = await Promise.all([
+        getAgents(),
+        getPositions()
+      ]);
+      setAgents(agentsData);
+      setPositions(positionsData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
   
   const [showAgentForm, setShowAgentForm] = useState(false);
   const [showPositionForm, setShowPositionForm] = useState(false);
@@ -36,24 +53,26 @@ const App: React.FC = () => {
     );
   }, [positions, searchQuery]);
 
-  const handleSaveAgent = (agent: Agent) => {
-    if (editingAgent) {
-      setAgents(agents.map(a => a.id === agent.id ? agent : a));
-    } else {
-      setAgents([...agents, agent]);
+  const handleSaveAgent = async (agent: Agent) => {
+    try {
+      await saveAgent(agent);
+      await fetchData();
+      setShowAgentForm(false);
+      setEditingAgent(undefined);
+    } catch (error) {
+      console.error('Error saving agent:', error);
     }
-    setShowAgentForm(false);
-    setEditingAgent(undefined);
   };
 
-  const handleSavePosition = (pos: PositionRequest) => {
-    if (editingPosition) {
-      setPositions(positions.map(p => p.id === pos.id ? pos : p));
-    } else {
-      setPositions([...positions, pos]);
+  const handleSavePosition = async (pos: PositionRequest) => {
+    try {
+      await savePosition(pos);
+      await fetchData();
+      setShowPositionForm(false);
+      setEditingPosition(undefined);
+    } catch (error) {
+      console.error('Error saving position:', error);
     }
-    setShowPositionForm(false);
-    setEditingPosition(undefined);
   };
 
   return (

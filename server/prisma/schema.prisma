@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FunctionalProfile {
+  Administrativo
+  Mantenimiento
+  Profesional
+}
+
+enum PositionStatus {
+  Abierta
+  Cubierta
+  Desierta
+}
+
+model Agent {
+  id                   String            @id @db.VarChar(20)
+  fullName             String            @db.VarChar(100)
+  originOrg            String            @db.VarChar(150)
+  profile              FunctionalProfile
+  keyCompetencies      String?           @db.Text
+  workingHours         Int               @default(40)
+  availableForRotation Boolean           @default(true)
+  interviewDate        DateTime          @default(now()) @db.Date
+
+  @@index([profile])
+}
+
+model Position {
+  id              String            @id @db.VarChar(20)
+  requestingOrg   String            @db.VarChar(150)
+  requestingArea  String            @db.VarChar(100)
+  profileRequired FunctionalProfile
+  mainFunctions   String?           @db.Text
+  hoursRequired   Int               @default(40)
+  requestDate     DateTime          @default(now()) @db.Date
+  status          PositionStatus    @default(Abierta)
+
+  @@index([profileRequired])
+  @@index([requestingOrg])
+}
