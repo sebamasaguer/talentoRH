@@ -44,10 +44,13 @@ app.get('/api/agents', async (req, res) => {
     // Format dates back to YYYY-MM-DD for the frontend
     const formattedAgents = agents.map(agent => ({
       ...agent,
-      interviewDate: agent.interviewDate.toISOString().split('T')[0]
+      interviewDate: agent.interviewDate instanceof Date
+        ? agent.interviewDate.toISOString().split('T')[0]
+        : String(agent.interviewDate).split('T')[0]
     }));
     res.json(formattedAgents);
   } catch (error) {
+    console.error('Error in GET /api/agents:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -62,10 +65,12 @@ app.post('/api/agents', async (req, res) => {
     });
     res.json({
       ...agent,
-      interviewDate: agent.interviewDate.toISOString().split('T')[0]
+      interviewDate: agent.interviewDate instanceof Date
+        ? agent.interviewDate.toISOString().split('T')[0]
+        : String(agent.interviewDate).split('T')[0]
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error in POST /api/agents:', error);
     res.status(400).json({ error });
   }
 });
@@ -75,10 +80,13 @@ app.get('/api/positions', async (req, res) => {
     const positions = await prisma.position.findMany();
     const formattedPositions = positions.map(pos => ({
       ...pos,
-      requestDate: pos.requestDate.toISOString().split('T')[0]
+      requestDate: pos.requestDate instanceof Date
+        ? pos.requestDate.toISOString().split('T')[0]
+        : String(pos.requestDate).split('T')[0]
     }));
     res.json(formattedPositions);
   } catch (error) {
+    console.error('Error in GET /api/positions:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -93,10 +101,12 @@ app.post('/api/positions', async (req, res) => {
     });
     res.json({
       ...position,
-      requestDate: position.requestDate.toISOString().split('T')[0]
+      requestDate: position.requestDate instanceof Date
+        ? position.requestDate.toISOString().split('T')[0]
+        : String(position.requestDate).split('T')[0]
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error in POST /api/positions:', error);
     res.status(400).json({ error });
   }
 });

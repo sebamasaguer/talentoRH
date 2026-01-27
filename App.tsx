@@ -23,8 +23,8 @@ const App: React.FC = () => {
         getAgents(),
         getPositions()
       ]);
-      setAgents(agentsData);
-      setPositions(positionsData);
+      if (Array.isArray(agentsData)) setAgents(agentsData);
+      if (Array.isArray(positionsData)) setPositions(positionsData);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
