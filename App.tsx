@@ -6,16 +6,23 @@ import AgentForm from './components/AgentForm';
 import PositionForm from './components/PositionForm';
 import SmartMatching from './components/SmartMatching';
 import AdminPanel from './components/AdminPanel';
-import { Agent, PositionRequest, PositionStatus } from './types';
+import Login from './components/Login';
+import { Agent, PositionRequest, PositionStatus, User } from './types';
 import { getAgents, getPositions, saveAgent, savePosition } from './services/apiService';
 
 const App: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'supply' | 'demand' | 'matching' | 'admin'>('dashboard');
   const [agents, setAgents] = useState<Agent[]>([]);
   const [positions, setPositions] = useState<PositionRequest[]>([]);
 
   useEffect(() => {
-    fetchData();
+    const token = localStorage.getItem('token');
+    if (token) {
+      // For now we just trust the token exists. In a real app we might validate it.
+      setUser({ email: 'usuario@talentohr.com' }); // Generic placeholder
+      fetchData();
+    }
   }, []);
 
   const fetchData = async () => {
@@ -75,6 +82,10 @@ const App: React.FC = () => {
       console.error('Error saving position:', error);
     }
   };
+
+  if (!user) {
+    return <Login onLoginSuccess={(userData) => { setUser(userData); fetchData(); }} />;
+  }
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab}>

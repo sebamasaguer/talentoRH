@@ -4,15 +4,32 @@ import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from "@google/genai";
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
 const prisma = new PrismaClient();
 const app = express();
 const port = process.env.PORT || 3001;
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-me';
 
 app.use(cors());
 app.use(express.json());
+
+// Middleware
+const authenticateToken = (req: any, res: any, next: any) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: 'Access denied, token missing' });
+
+  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+};
 
 // Zod Schemas
 const OrganizationSchema = z.object({
@@ -47,9 +64,26 @@ const PositionSchema = z.object({
   status: z.enum(['Abierta', 'Cubierta', 'Desierta']).default('Abierta')
 });
 
+// Auth Endpoints
+app.post('/api/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '8h' });
+    res.json({ token, user: { email: user.email } });
+  } catch (error) {
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
 // Admin Endpoints
 // Organizations
-app.get('/api/organizations', async (req, res) => {
+app.get('/api/organizations', authenticateToken, async (req, res) => {
   try {
     const orgs = await prisma.organization.findMany({ orderBy: { name: 'asc' } });
     res.json(orgs);
@@ -58,7 +92,7 @@ app.get('/api/organizations', async (req, res) => {
   }
 });
 
-app.post('/api/organizations', async (req, res) => {
+app.post('/api/organizations', authenticateToken, async (req, res) => {
   try {
     const data = OrganizationSchema.parse(req.body);
     const org = await prisma.organization.upsert({
@@ -72,7 +106,7 @@ app.post('/api/organizations', async (req, res) => {
   }
 });
 
-app.delete('/api/organizations/:id', async (req, res) => {
+app.delete('/api/organizations/:id', authenticateToken, async (req, res) => {
   try {
     await prisma.organization.delete({ where: { id: parseInt(req.params.id) } });
     res.json({ success: true });
@@ -82,7 +116,7 @@ app.delete('/api/organizations/:id', async (req, res) => {
 });
 
 // Functional Profiles
-app.get('/api/profiles', async (req, res) => {
+app.get('/api/profiles', authenticateToken, async (req, res) => {
   try {
     const profiles = await prisma.functionalProfile.findMany({ orderBy: { name: 'asc' } });
     res.json(profiles);
@@ -91,7 +125,7 @@ app.get('/api/profiles', async (req, res) => {
   }
 });
 
-app.post('/api/profiles', async (req, res) => {
+app.post('/api/profiles', authenticateToken, async (req, res) => {
   try {
     const data = FunctionalProfileSchema.parse(req.body);
     const profile = await prisma.functionalProfile.upsert({
@@ -105,7 +139,7 @@ app.post('/api/profiles', async (req, res) => {
   }
 });
 
-app.delete('/api/profiles/:id', async (req, res) => {
+app.delete('/api/profiles/:id', authenticateToken, async (req, res) => {
   try {
     await prisma.functionalProfile.delete({ where: { id: parseInt(req.params.id) } });
     res.json({ success: true });
@@ -115,7 +149,7 @@ app.delete('/api/profiles/:id', async (req, res) => {
 });
 
 // Main Endpoints
-app.get('/api/agents', async (req, res) => {
+app.get('/api/agents', authenticateToken, async (req, res) => {
   try {
     const agents = await prisma.agent.findMany({
       include: { originOrg: true, profile: true }
@@ -136,7 +170,7 @@ app.get('/api/agents', async (req, res) => {
   }
 });
 
-app.post('/api/agents', async (req, res) => {
+app.post('/api/agents', authenticateToken, async (req, res) => {
   try {
     const data = AgentSchema.parse(req.body);
     const agent = await prisma.agent.upsert({
@@ -159,7 +193,7 @@ app.post('/api/agents', async (req, res) => {
   }
 });
 
-app.get('/api/positions', async (req, res) => {
+app.get('/api/positions', authenticateToken, async (req, res) => {
   try {
     const positions = await prisma.position.findMany({
       include: { requestingOrg: true, profileRequired: true }
@@ -179,7 +213,7 @@ app.get('/api/positions', async (req, res) => {
   }
 });
 
-app.post('/api/positions', async (req, res) => {
+app.post('/api/positions', authenticateToken, async (req, res) => {
   try {
     const data = PositionSchema.parse(req.body);
     const position = await prisma.position.upsert({
@@ -202,7 +236,7 @@ app.post('/api/positions', async (req, res) => {
   }
 });
 
-app.post('/api/matching', async (req, res) => {
+app.post('/api/matching', authenticateToken, async (req, res) => {
   try {
     const { positionId } = req.body;
 

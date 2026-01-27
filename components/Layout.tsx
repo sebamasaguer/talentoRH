@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { logout } from '../services/apiService';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -69,6 +70,12 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
             {activeTab === 'admin' && 'Administración de Tablas Maestras'}
           </h2>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => logout()}
+              className="text-slate-400 hover:text-red-600 transition text-sm font-semibold"
+            >
+              Cerrar Sesión
+            </button>
             <div className="relative">
                <span className="block w-3 h-3 bg-green-500 rounded-full absolute -top-0.5 -right-0.5 border-2 border-white"></span>
                <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-600 font-bold">JD</div>

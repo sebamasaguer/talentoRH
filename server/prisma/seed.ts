@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -10,6 +11,16 @@ async function main() {
   await prisma.agent.deleteMany({});
   await prisma.organization.deleteMany({});
   await prisma.functionalProfile.deleteMany({});
+  await prisma.user.deleteMany({});
+
+  // 0. Create Admin User
+  const hashedPassword = await bcrypt.hash('admin123', 10);
+  await prisma.user.create({
+    data: {
+      email: 'admin@talentohr.com',
+      password: hashedPassword,
+    }
+  });
 
   // 2. Create Organizations
   const orgs = await Promise.all([

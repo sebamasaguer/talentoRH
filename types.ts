@@ -46,3 +46,12 @@ export interface MatchingResult {
   score: number;
   reasoning: string;
 }
+
+export interface User {
+  email: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
