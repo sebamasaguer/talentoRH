@@ -3,8 +3,8 @@ import React from 'react';
 
 interface LayoutProps {
   children: React.ReactNode;
-  activeTab: 'dashboard' | 'supply' | 'demand' | 'matching';
-  setActiveTab: (tab: 'dashboard' | 'supply' | 'demand' | 'matching') => void;
+  activeTab: 'dashboard' | 'supply' | 'demand' | 'matching' | 'admin';
+  setActiveTab: (tab: 'dashboard' | 'supply' | 'demand' | 'matching' | 'admin') => void;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) => {
@@ -45,6 +45,13 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
           >
             ✨ Matching Inteligente
           </button>
+          <div className="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Configuración</div>
+          <button
+            onClick={() => setActiveTab('admin')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === 'admin' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
+          >
+            ⚙️ Administración
+          </button>
         </nav>
         <div className="p-4 border-t border-slate-800 text-xs text-slate-500 text-center">
           &copy; 2024 Recursos Humanos v1.0
@@ -59,6 +66,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
             {activeTab === 'supply' && 'Gestión de Agentes (Oferta)'}
             {activeTab === 'demand' && 'Pedidos de Organismos (Demanda)'}
             {activeTab === 'matching' && 'Emparejamiento Inteligente'}
+            {activeTab === 'admin' && 'Administración de Tablas Maestras'}
           </h2>
           <div className="flex items-center gap-4">
             <div className="relative">

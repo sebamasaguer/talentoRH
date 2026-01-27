@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
-import { FunctionalProfile, Agent } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Agent, Organization, FunctionalProfile } from '../types';
+import { getOrganizations, getProfiles } from '../services/apiService';
 
 interface AgentFormProps {
   onSave: (agent: Agent) => void;
@@ -9,19 +10,48 @@ interface AgentFormProps {
 }
 
 const AgentForm: React.FC<AgentFormProps> = ({ onSave, onCancel, initialData }) => {
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [profiles, setProfiles] = useState<FunctionalProfile[]>([]);
+
   const [formData, setFormData] = useState<Agent>(initialData || {
     id: `A-${Math.floor(Math.random() * 900) + 100}`,
     fullName: '',
-    originOrg: '',
-    profile: FunctionalProfile.ADMIN,
+    originOrgId: 0,
+    profileId: 0,
     keyCompetencies: '',
     workingHours: 40,
     availableForRotation: true,
     interviewDate: new Date().toISOString().split('T')[0]
   });
 
+  useEffect(() => {
+    const loadMasterData = async () => {
+      try {
+        const [orgs, profs] = await Promise.all([getOrganizations(), getProfiles()]);
+        setOrganizations(orgs);
+        setProfiles(profs);
+
+        // If creating new and we have data, set first items as default
+        if (!initialData) {
+          setFormData(prev => ({
+            ...prev,
+            originOrgId: orgs[0]?.id || 0,
+            profileId: profs[0]?.id || 0
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading form data:', error);
+      }
+    };
+    loadMasterData();
+  }, [initialData]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.originOrgId === 0 || formData.profileId === 0) {
+      alert('Por favor seleccione un organismo y un perfil.');
+      return;
+    }
     onSave(formData);
   };
 
@@ -56,24 +86,30 @@ const AgentForm: React.FC<AgentFormProps> = ({ onSave, onCancel, initialData }) 
 
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">Organismo de Origen</label>
-            <input 
+            <select
               required
-              value={formData.originOrg} 
-              onChange={e => setFormData({...formData, originOrg: e.target.value})}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" 
-              placeholder="Ej. Ministerio de Infraestructura"
-            />
+              value={formData.originOrgId}
+              onChange={e => setFormData({...formData, originOrgId: parseInt(e.target.value)})}
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
+            >
+              <option value={0} disabled>Seleccione un organismo...</option>
+              {organizations.map(org => (
+                <option key={org.id} value={org.id}>{org.name}</option>
+              ))}
+            </select>
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">Perfil Funcional</label>
             <select 
-              value={formData.profile}
-              onChange={e => setFormData({...formData, profile: e.target.value as FunctionalProfile})}
+              required
+              value={formData.profileId}
+              onChange={e => setFormData({...formData, profileId: parseInt(e.target.value)})}
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
             >
-              {Object.values(FunctionalProfile).map(p => (
-                <option key={p} value={p}>{p}</option>
+              <option value={0} disabled>Seleccione un perfil...</option>
+              {profiles.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
           </div>

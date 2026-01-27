@@ -5,11 +5,12 @@ import Dashboard from './components/Dashboard';
 import AgentForm from './components/AgentForm';
 import PositionForm from './components/PositionForm';
 import SmartMatching from './components/SmartMatching';
+import AdminPanel from './components/AdminPanel';
 import { Agent, PositionRequest, PositionStatus } from './types';
 import { getAgents, getPositions, saveAgent, savePosition } from './services/apiService';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'supply' | 'demand' | 'matching'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'supply' | 'demand' | 'matching' | 'admin'>('dashboard');
   const [agents, setAgents] = useState<Agent[]>([]);
   const [positions, setPositions] = useState<PositionRequest[]>([]);
 
@@ -40,16 +41,16 @@ const App: React.FC = () => {
   const filteredAgents = useMemo(() => {
     return agents.filter(a => 
       a.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      a.profile.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      a.originOrg.toLowerCase().includes(searchQuery.toLowerCase())
+      (a.profile || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (a.originOrg || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [agents, searchQuery]);
 
   const filteredPositions = useMemo(() => {
     return positions.filter(p => 
-      p.requestingOrg.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      p.profileRequired.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.requestingArea.toLowerCase().includes(searchQuery.toLowerCase())
+      (p.requestingOrg || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.profileRequired || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.requestingArea || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [positions, searchQuery]);
 
@@ -231,6 +232,10 @@ const App: React.FC = () => {
 
       {activeTab === 'matching' && (
         <SmartMatching agents={agents} positions={positions} />
+      )}
+
+      {activeTab === 'admin' && (
+        <AdminPanel />
       )}
 
       {/* Forms Modals */}

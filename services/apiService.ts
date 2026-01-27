@@ -1,4 +1,4 @@
-import { Agent, PositionRequest } from '../types';
+import { Agent, PositionRequest, Organization, FunctionalProfile } from '../types';
 
 const API_URL = 'http://localhost:3001/api';
 
@@ -20,6 +20,49 @@ export const saveAgent = async (agent: Agent): Promise<Agent> => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(agent),
+  });
+  return handleResponse(response);
+};
+
+// Admin Services
+export const getOrganizations = async (): Promise<Organization[]> => {
+  const response = await fetch(`${API_URL}/organizations`);
+  return handleResponse(response);
+};
+
+export const saveOrganization = async (org: Partial<Organization>): Promise<Organization> => {
+  const response = await fetch(`${API_URL}/organizations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(org),
+  });
+  return handleResponse(response);
+};
+
+export const deleteOrganization = async (id: number): Promise<void> => {
+  const response = await fetch(`${API_URL}/organizations/${id}`, {
+    method: 'DELETE',
+  });
+  return handleResponse(response);
+};
+
+export const getProfiles = async (): Promise<FunctionalProfile[]> => {
+  const response = await fetch(`${API_URL}/profiles`);
+  return handleResponse(response);
+};
+
+export const saveProfile = async (profile: Partial<FunctionalProfile>): Promise<FunctionalProfile> => {
+  const response = await fetch(`${API_URL}/profiles`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(profile),
+  });
+  return handleResponse(response);
+};
+
+export const deleteProfile = async (id: number): Promise<void> => {
+  const response = await fetch(`${API_URL}/profiles/${id}`, {
+    method: 'DELETE',
   });
   return handleResponse(response);
 };

@@ -7,10 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum FunctionalProfile {
-  Administrativo
-  Mantenimiento
-  Profesional
+model Organization {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  agents    Agent[]
+  positions Position[]
+}
+
+model FunctionalProfile {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  agents    Agent[]
+  positions Position[]
 }
 
 enum PositionStatus {
@@ -22,26 +30,30 @@ enum PositionStatus {
 model Agent {
   id                   String            @id @db.VarChar(20)
   fullName             String            @db.VarChar(100)
-  originOrg            String            @db.VarChar(150)
-  profile              FunctionalProfile
+  originOrgId          Int
+  originOrg            Organization      @relation(fields: [originOrgId], references: [id])
+  profileId            Int
+  profile              FunctionalProfile @relation(fields: [profileId], references: [id])
   keyCompetencies      String?           @db.Text
   workingHours         Int               @default(40)
   availableForRotation Boolean           @default(true)
   interviewDate        DateTime          @default(now()) @db.Date
 
-  @@index([profile])
+  @@index([profileId])
 }
 
 model Position {
-  id              String            @id @db.VarChar(20)
-  requestingOrg   String            @db.VarChar(150)
-  requestingArea  String            @db.VarChar(100)
-  profileRequired FunctionalProfile
-  mainFunctions   String?           @db.Text
-  hoursRequired   Int               @default(40)
-  requestDate     DateTime          @default(now()) @db.Date
-  status          PositionStatus    @default(Abierta)
+  id                String            @id @db.VarChar(20)
+  requestingOrgId   Int
+  requestingOrg     Organization      @relation(fields: [requestingOrgId], references: [id])
+  requestingArea    String            @db.VarChar(100)
+  profileRequiredId Int
+  profileRequired   FunctionalProfile @relation(fields: [profileRequiredId], references: [id])
+  mainFunctions     String?           @db.Text
+  hoursRequired     Int               @default(40)
+  requestDate       DateTime          @default(now()) @db.Date
+  status            PositionStatus    @default(Abierta)
 
-  @@index([profileRequired])
-  @@index([requestingOrg])
+  @@index([profileRequiredId])
+  @@index([requestingOrgId])
 }
