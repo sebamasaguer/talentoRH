@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Agent, PositionRequest } from '../types';
-import { getSmartMatches } from '../services/geminiService';
+import { getSmartMatches } from '../services/apiService';
 
 interface SmartMatchingProps {
   agents: Agent[];
@@ -17,7 +17,7 @@ const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions }) => {
     if (!selectedPosition) return;
     setLoading(true);
     try {
-      const matchResults = await getSmartMatches(selectedPosition, agents);
+      const matchResults = await getSmartMatches(selectedPosition.id);
       setResults(matchResults);
     } catch (error) {
       console.error(error);
