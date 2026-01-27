@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
-import { FunctionalProfile, PositionStatus, PositionRequest } from '../types';
+import React, { useState, useEffect } from 'react';
+import { PositionStatus, PositionRequest, Organization, FunctionalProfile } from '../types';
+import { getOrganizations, getProfiles } from '../services/apiService';
 
 interface PositionFormProps {
   onSave: (position: PositionRequest) => void;
@@ -9,19 +10,48 @@ interface PositionFormProps {
 }
 
 const PositionForm: React.FC<PositionFormProps> = ({ onSave, onCancel, initialData }) => {
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [profiles, setProfiles] = useState<FunctionalProfile[]>([]);
+
   const [formData, setFormData] = useState<PositionRequest>(initialData || {
     id: `B-${Math.floor(Math.random() * 900) + 100}`,
-    requestingOrg: '',
+    requestingOrgId: 0,
     requestingArea: '',
-    profileRequired: FunctionalProfile.ADMIN,
+    profileRequiredId: 0,
     mainFunctions: '',
     hoursRequired: 40,
     requestDate: new Date().toISOString().split('T')[0],
     status: PositionStatus.OPEN
   });
 
+  useEffect(() => {
+    const loadMasterData = async () => {
+      try {
+        const [orgs, profs] = await Promise.all([getOrganizations(), getProfiles()]);
+        setOrganizations(orgs);
+        setProfiles(profs);
+
+        // If creating new and we have data, set first items as default
+        if (!initialData) {
+          setFormData(prev => ({
+            ...prev,
+            requestingOrgId: orgs[0]?.id || 0,
+            profileRequiredId: profs[0]?.id || 0
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading form data:', error);
+      }
+    };
+    loadMasterData();
+  }, [initialData]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.requestingOrgId === 0 || formData.profileRequiredId === 0) {
+      alert('Por favor seleccione un organismo y un perfil.');
+      return;
+    }
     onSave(formData);
   };
 
@@ -45,13 +75,17 @@ const PositionForm: React.FC<PositionFormProps> = ({ onSave, onCancel, initialDa
 
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">Organismo Solicitante</label>
-            <input 
+            <select
               required
-              value={formData.requestingOrg} 
-              onChange={e => setFormData({...formData, requestingOrg: e.target.value})}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" 
-              placeholder="Ej. Ministerio de Seguridad"
-            />
+              value={formData.requestingOrgId}
+              onChange={e => setFormData({...formData, requestingOrgId: parseInt(e.target.value)})}
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
+            >
+              <option value={0} disabled>Seleccione un organismo...</option>
+              {organizations.map(org => (
+                <option key={org.id} value={org.id}>{org.name}</option>
+              ))}
+            </select>
           </div>
 
           <div className="space-y-2">
@@ -68,12 +102,14 @@ const PositionForm: React.FC<PositionFormProps> = ({ onSave, onCancel, initialDa
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">Perfil Requerido</label>
             <select 
-              value={formData.profileRequired}
-              onChange={e => setFormData({...formData, profileRequired: e.target.value as FunctionalProfile})}
+              required
+              value={formData.profileRequiredId}
+              onChange={e => setFormData({...formData, profileRequiredId: parseInt(e.target.value)})}
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
             >
-              {Object.values(FunctionalProfile).map(p => (
-                <option key={p} value={p}>{p}</option>
+              <option value={0} disabled>Seleccione un perfil...</option>
+              {profiles.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
           </div>

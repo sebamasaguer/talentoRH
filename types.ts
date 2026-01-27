@@ -1,8 +1,12 @@
 
-export enum FunctionalProfile {
-  ADMIN = 'Administrativo',
-  MAINT = 'Mantenimiento',
-  PROF = 'Profesional'
+export interface Organization {
+  id: number;
+  name: string;
+}
+
+export interface FunctionalProfile {
+  id: number;
+  name: string;
 }
 
 export enum PositionStatus {
@@ -14,8 +18,10 @@ export enum PositionStatus {
 export interface Agent {
   id: string;
   fullName: string;
-  originOrg: string;
-  profile: FunctionalProfile;
+  originOrgId: number;
+  originOrg?: string; // For display
+  profileId: number;
+  profile?: string; // For display
   keyCompetencies: string;
   workingHours: number;
   availableForRotation: boolean;
@@ -24,9 +30,11 @@ export interface Agent {
 
 export interface PositionRequest {
   id: string;
-  requestingOrg: string;
+  requestingOrgId: number;
+  requestingOrg?: string; // For display
   requestingArea: string;
-  profileRequired: FunctionalProfile;
+  profileRequiredId: number;
+  profileRequired?: string; // For display
   mainFunctions: string;
   hoursRequired: number;
   requestDate: string;
