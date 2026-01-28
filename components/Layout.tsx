@@ -68,10 +68,19 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
             {activeTab === 'matching' && 'Emparejamiento Inteligente'}
             {activeTab === 'admin' && 'Administración de Tablas Maestras'}
           </h2>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => {
+                localStorage.removeItem('token');
+                window.location.reload();
+              }}
+              className="text-sm font-medium text-slate-500 hover:text-red-600 transition"
+            >
+              Cerrar Sesión
+            </button>
             <div className="relative">
                <span className="block w-3 h-3 bg-green-500 rounded-full absolute -top-0.5 -right-0.5 border-2 border-white"></span>
-               <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-600 font-bold">JD</div>
+               <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-600 font-bold">AD</div>
             </div>
           </div>
         </header>

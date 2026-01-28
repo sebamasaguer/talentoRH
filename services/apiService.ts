@@ -2,7 +2,20 @@ import { Agent, PositionRequest, Organization, FunctionalProfile } from '../type
 
 const API_URL = 'http://localhost:3001/api';
 
+const getHeaders = () => {
+  const token = localStorage.getItem('token');
+  const headers: any = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const handleResponse = async (response: Response) => {
+  if ((response.status === 401 || response.status === 403) && !response.url.endsWith('/login')) {
+    localStorage.removeItem('token');
+    window.location.reload();
+  }
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
@@ -10,15 +23,26 @@ const handleResponse = async (response: Response) => {
   return response.json();
 };
 
+export const login = async (email: string, password: string): Promise<{ token: string, user: any }> => {
+  const response = await fetch(`${API_URL}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  return handleResponse(response);
+};
+
 export const getAgents = async (): Promise<Agent[]> => {
-  const response = await fetch(`${API_URL}/agents`);
+  const response = await fetch(`${API_URL}/agents`, {
+    headers: getHeaders()
+  });
   return handleResponse(response);
 };
 
 export const saveAgent = async (agent: Agent): Promise<Agent> => {
   const response = await fetch(`${API_URL}/agents`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
     body: JSON.stringify(agent),
   });
   return handleResponse(response);
@@ -26,14 +50,16 @@ export const saveAgent = async (agent: Agent): Promise<Agent> => {
 
 // Admin Services
 export const getOrganizations = async (): Promise<Organization[]> => {
-  const response = await fetch(`${API_URL}/organizations`);
+  const response = await fetch(`${API_URL}/organizations`, {
+    headers: getHeaders()
+  });
   return handleResponse(response);
 };
 
 export const saveOrganization = async (org: Partial<Organization>): Promise<Organization> => {
   const response = await fetch(`${API_URL}/organizations`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
     body: JSON.stringify(org),
   });
   return handleResponse(response);
@@ -42,19 +68,22 @@ export const saveOrganization = async (org: Partial<Organization>): Promise<Orga
 export const deleteOrganization = async (id: number): Promise<void> => {
   const response = await fetch(`${API_URL}/organizations/${id}`, {
     method: 'DELETE',
+    headers: getHeaders(),
   });
   return handleResponse(response);
 };
 
 export const getProfiles = async (): Promise<FunctionalProfile[]> => {
-  const response = await fetch(`${API_URL}/profiles`);
+  const response = await fetch(`${API_URL}/profiles`, {
+    headers: getHeaders()
+  });
   return handleResponse(response);
 };
 
 export const saveProfile = async (profile: Partial<FunctionalProfile>): Promise<FunctionalProfile> => {
   const response = await fetch(`${API_URL}/profiles`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
     body: JSON.stringify(profile),
   });
   return handleResponse(response);
@@ -63,19 +92,22 @@ export const saveProfile = async (profile: Partial<FunctionalProfile>): Promise<
 export const deleteProfile = async (id: number): Promise<void> => {
   const response = await fetch(`${API_URL}/profiles/${id}`, {
     method: 'DELETE',
+    headers: getHeaders(),
   });
   return handleResponse(response);
 };
 
 export const getPositions = async (): Promise<PositionRequest[]> => {
-  const response = await fetch(`${API_URL}/positions`);
+  const response = await fetch(`${API_URL}/positions`, {
+    headers: getHeaders()
+  });
   return handleResponse(response);
 };
 
 export const savePosition = async (position: PositionRequest): Promise<PositionRequest> => {
   const response = await fetch(`${API_URL}/positions`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
     body: JSON.stringify(position),
   });
   return handleResponse(response);
@@ -84,7 +116,7 @@ export const savePosition = async (position: PositionRequest): Promise<PositionR
 export const getSmartMatches = async (positionId: string): Promise<any[]> => {
   const response = await fetch(`${API_URL}/matching`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
     body: JSON.stringify({ positionId }),
   });
   return handleResponse(response);

@@ -6,17 +6,21 @@ import AgentForm from './components/AgentForm';
 import PositionForm from './components/PositionForm';
 import SmartMatching from './components/SmartMatching';
 import AdminPanel from './components/AdminPanel';
+import Login from './components/Login';
 import { Agent, PositionRequest, PositionStatus } from './types';
 import { getAgents, getPositions, saveAgent, savePosition } from './services/apiService';
 
 const App: React.FC = () => {
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [activeTab, setActiveTab] = useState<'dashboard' | 'supply' | 'demand' | 'matching' | 'admin'>('dashboard');
   const [agents, setAgents] = useState<Agent[]>([]);
   const [positions, setPositions] = useState<PositionRequest[]>([]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (token) {
+      fetchData();
+    }
+  }, [token]);
 
   const fetchData = async () => {
     try {
@@ -75,6 +79,10 @@ const App: React.FC = () => {
       console.error('Error saving position:', error);
     }
   };
+
+  if (!token) {
+    return <Login onLoginSuccess={(newToken) => setToken(newToken)} />;
+  }
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
