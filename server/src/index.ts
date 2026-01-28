@@ -4,17 +4,45 @@ import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from "@google/genai";
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
 const prisma = new PrismaClient();
 const app = express();
 const port = process.env.PORT || 3001;
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-123';
 
 app.use(cors());
 app.use(express.json());
 
+// Middleware to authenticate JWT
+const authenticateToken = (req: any, res: any, next: any) => {
+  // Allow login without token
+  if (req.path === '/login' || req.path === '/api/login') return next();
+
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: 'Acceso denegado. Token no provisto.' });
+
+  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+    if (err) return res.status(403).json({ error: 'Token inválido o expirado.' });
+    req.user = user;
+    next();
+  });
+};
+
+// Apply authentication middleware to all /api routes
+app.use('/api', authenticateToken);
+
 // Zod Schemas
+const LoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6)
+});
+
 const OrganizationSchema = z.object({
   id: z.number().optional(),
   name: z.string().min(1)
@@ -45,6 +73,28 @@ const PositionSchema = z.object({
   hoursRequired: z.number().default(40),
   requestDate: z.string().or(z.date()).transform(val => new Date(val)),
   status: z.enum(['Abierta', 'Cubierta', 'Desierta']).default('Abierta')
+});
+
+// Auth Endpoints
+app.post('/api/login', async (req, res) => {
+  try {
+    const { email, password } = LoginSchema.parse(req.body);
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '8h' });
+    res.json({ token, user: { id: user.id, email: user.email } });
+  } catch (error) {
+    res.status(400).json({ error });
+  }
 });
 
 // Admin Endpoints
