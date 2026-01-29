@@ -125,7 +125,14 @@ const App: React.FC = () => {
                 {filteredAgents.map(agent => (
                   <tr key={agent.id} className="hover:bg-slate-50/50 transition">
                     <td className="px-6 py-4">
-                      <p className="font-bold text-slate-900">{agent.fullName}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-slate-900">{agent.fullName}</p>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                          agent.status === 'Asignado' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
+                        }`}>
+                          {agent.status}
+                        </span>
+                      </div>
                       <p className="text-xs text-slate-400">{agent.id} • Entrevista: {agent.interviewDate}</p>
                     </td>
                     <td className="px-6 py-4 text-slate-600">{agent.originOrg}</td>
@@ -239,7 +246,11 @@ const App: React.FC = () => {
       )}
 
       {activeTab === 'matching' && (
-        <SmartMatching agents={agents} positions={positions} />
+        <SmartMatching
+          agents={agents}
+          positions={positions}
+          onMatchSuccess={fetchData}
+        />
       )}
 
       {activeTab === 'admin' && (

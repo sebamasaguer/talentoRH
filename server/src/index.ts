@@ -61,7 +61,8 @@ const AgentSchema = z.object({
   keyCompetencies: z.string().optional().nullable(),
   workingHours: z.number().default(40),
   availableForRotation: z.boolean().default(true),
-  interviewDate: z.string().or(z.date()).transform(val => new Date(val))
+  interviewDate: z.string().or(z.date()).transform(val => new Date(val)),
+  status: z.enum(['Disponible', 'Asignado']).default('Disponible')
 });
 
 const PositionSchema = z.object({
@@ -73,6 +74,13 @@ const PositionSchema = z.object({
   hoursRequired: z.number().default(40),
   requestDate: z.string().or(z.date()).transform(val => new Date(val)),
   status: z.enum(['Abierta', 'Cubierta', 'Desierta']).default('Abierta')
+});
+
+const MatchSchema = z.object({
+  agentId: z.string(),
+  positionId: z.string(),
+  score: z.number().optional(),
+  reasoning: z.string().optional()
 });
 
 // Auth Endpoints
@@ -260,7 +268,9 @@ app.post('/api/matching', async (req, res) => {
       where: { id: positionId },
       include: { requestingOrg: true, profileRequired: true }
     });
+    // Solo considerar agentes que estén disponibles para reubicación
     const agents = await prisma.agent.findMany({
+      where: { status: 'Disponible' },
       include: { originOrg: true, profile: true }
     });
 
@@ -315,6 +325,43 @@ app.post('/api/matching', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error processing with AI' });
+  }
+});
+
+app.post('/api/matches', async (req, res) => {
+  try {
+    const { agentId, positionId, score, reasoning } = MatchSchema.parse(req.body);
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Crear el registro del Match
+      const match = await tx.match.create({
+        data: {
+          agentId,
+          positionId,
+          score,
+          reasoning
+        }
+      });
+
+      // 2. Cambiar el estado del agente a 'Asignado'
+      await tx.agent.update({
+        where: { id: agentId },
+        data: { status: 'Asignado' }
+      });
+
+      // 3. Cambiar el estado de la búsqueda a 'Cubierta'
+      await tx.position.update({
+        where: { id: positionId },
+        data: { status: 'Cubierta' }
+      });
+
+      return match;
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error creating match:', error);
+    res.status(400).json({ error: 'No se pudo registrar el match y actualizar los estados.' });
   }
 });
 
