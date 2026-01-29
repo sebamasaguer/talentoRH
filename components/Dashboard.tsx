@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Agent, PositionRequest } from '../types';
+import { Agent, PositionRequest, AgentStatus } from '../types';
 
 interface DashboardProps {
   agents: Agent[];
@@ -21,9 +21,9 @@ const Dashboard: React.FC<DashboardProps> = ({ agents, positions }) => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <p className="text-slate-500 text-sm font-medium">Agentes Reubicables</p>
-          <h3 className="text-3xl font-bold mt-1">{agents.length}</h3>
-          <p className="text-green-600 text-xs mt-2 font-semibold">↑ 4% este mes</p>
+          <p className="text-slate-500 text-sm font-medium">Agentes Disponibles</p>
+          <h3 className="text-3xl font-bold mt-1">{agents.filter(a => a.status === AgentStatus.AVAILABLE).length}</h3>
+          <p className="text-blue-600 text-xs mt-2 font-semibold">{agents.length} agentes totales</p>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
           <p className="text-slate-500 text-sm font-medium">Búsquedas Abiertas</p>

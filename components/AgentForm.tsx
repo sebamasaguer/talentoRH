@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Agent, Organization, FunctionalProfile } from '../types';
+import { Agent, Organization, FunctionalProfile, AgentStatus } from '../types';
 import { getOrganizations, getProfiles } from '../services/apiService';
 
 interface AgentFormProps {
@@ -21,7 +21,8 @@ const AgentForm: React.FC<AgentFormProps> = ({ onSave, onCancel, initialData }) 
     keyCompetencies: '',
     workingHours: 40,
     availableForRotation: true,
-    interviewDate: new Date().toISOString().split('T')[0]
+    interviewDate: new Date().toISOString().split('T')[0],
+    status: AgentStatus.AVAILABLE
   });
 
   useEffect(() => {

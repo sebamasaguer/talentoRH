@@ -27,6 +27,11 @@ enum PositionStatus {
   Desierta
 }
 
+enum AgentStatus {
+  Disponible
+  Asignado
+}
+
 model Agent {
   id                   String            @id @db.VarChar(20)
   fullName             String            @db.VarChar(100)
@@ -38,6 +43,8 @@ model Agent {
   workingHours         Int               @default(40)
   availableForRotation Boolean           @default(true)
   interviewDate        DateTime          @default(now()) @db.Date
+  status               AgentStatus       @default(Disponible)
+  matches              Match[]
 
   @@index([profileId])
 }
@@ -53,9 +60,24 @@ model Position {
   hoursRequired     Int               @default(40)
   requestDate       DateTime          @default(now()) @db.Date
   status            PositionStatus    @default(Abierta)
+  matches           Match[]
 
   @@index([profileRequiredId])
   @@index([requestingOrgId])
+}
+
+model Match {
+  id         Int      @id @default(autoincrement())
+  agentId    String   @db.VarChar(20)
+  agent      Agent    @relation(fields: [agentId], references: [id])
+  positionId String   @db.VarChar(20)
+  position   Position @relation(fields: [positionId], references: [id])
+  matchDate  DateTime @default(now())
+  score      Int?
+  reasoning  String?  @db.Text
+
+  @@index([agentId])
+  @@index([positionId])
 }
 
 model User {

@@ -32,6 +32,15 @@ export const login = async (email: string, password: string): Promise<{ token: s
   return handleResponse(response);
 };
 
+export const createMatch = async (matchData: { agentId: string, positionId: string, score: number, reasoning: string }): Promise<any> => {
+  const response = await fetch(`${API_URL}/matches`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(matchData),
+  });
+  return handleResponse(response);
+};
+
 export const getAgents = async (): Promise<Agent[]> => {
   const response = await fetch(`${API_URL}/agents`, {
     headers: getHeaders()

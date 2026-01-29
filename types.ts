@@ -15,6 +15,11 @@ export enum PositionStatus {
   VOID = 'Desierta'
 }
 
+export enum AgentStatus {
+  AVAILABLE = 'Disponible',
+  ASSIGNED = 'Asignado'
+}
+
 export interface Agent {
   id: string;
   fullName: string;
@@ -26,6 +31,7 @@ export interface Agent {
   workingHours: number;
   availableForRotation: boolean;
   interviewDate: string;
+  status: AgentStatus;
 }
 
 export interface PositionRequest {
@@ -43,6 +49,16 @@ export interface PositionRequest {
 
 export interface MatchingResult {
   agentId: string;
+  fullName: string;
+  score: number;
+  reasoning: string;
+}
+
+export interface MatchRecord {
+  id?: number;
+  agentId: string;
+  positionId: string;
+  matchDate: string;
   score: number;
   reasoning: string;
 }

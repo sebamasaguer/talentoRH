@@ -1,17 +1,19 @@
 
 import React, { useState } from 'react';
 import { Agent, PositionRequest } from '../types';
-import { getSmartMatches } from '../services/apiService';
+import { getSmartMatches, createMatch } from '../services/apiService';
 
 interface SmartMatchingProps {
   agents: Agent[];
   positions: PositionRequest[];
+  onMatchSuccess: () => void;
 }
 
-const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions }) => {
+const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions, onMatchSuccess }) => {
   const [selectedPosition, setSelectedPosition] = useState<PositionRequest | null>(null);
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [confirmingMatch, setConfirmingMatch] = useState<string | null>(null);
 
   const handleRunMatch = async () => {
     if (!selectedPosition) return;
@@ -24,6 +26,33 @@ const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions }) => {
       alert("Hubo un error al procesar el matching con la IA.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConfirmMatch = async (result: any) => {
+    if (!selectedPosition) return;
+
+    if (!window.confirm(`¿Estás seguro de asignar a ${result.fullName} a esta posición? Se actualizarán los estados automáticamente.`)) {
+      return;
+    }
+
+    setConfirmingMatch(result.agentId);
+    try {
+      await createMatch({
+        agentId: result.agentId,
+        positionId: selectedPosition.id,
+        score: result.score,
+        reasoning: result.reasoning
+      });
+      alert("¡Match confirmado exitosamente!");
+      setResults([]);
+      setSelectedPosition(null);
+      onMatchSuccess();
+    } catch (error) {
+      console.error(error);
+      alert("Hubo un error al confirmar el match.");
+    } finally {
+      setConfirmingMatch(null);
     }
   };
 
@@ -133,10 +162,29 @@ const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions }) => {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-4">
                     <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Análisis de la IA:</p>
                     <p className="text-sm text-slate-700 italic">"{res.reasoning}"</p>
                   </div>
+
+                  <button
+                    onClick={() => handleConfirmMatch(res)}
+                    disabled={!!confirmingMatch}
+                    className={`w-full py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-2 ${
+                      confirmingMatch === res.agentId
+                      ? 'bg-amber-100 text-amber-600'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                    }`}
+                  >
+                    {confirmingMatch === res.agentId ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin"></div>
+                        Confirmando...
+                      </>
+                    ) : (
+                      <>✅ Confirmar Asignación</>
+                    )}
+                  </button>
                 </div>
               ))}
             </div>
