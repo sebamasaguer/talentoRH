@@ -365,6 +365,38 @@ app.post('/api/matches', async (req, res) => {
   }
 });
 
+app.get('/api/matches', async (req, res) => {
+  try {
+    const matches = await prisma.match.findMany({
+      include: {
+        agent: {
+          include: { profile: true }
+        },
+        position: {
+          include: { requestingOrg: true, profileRequired: true }
+        }
+      },
+      orderBy: { matchDate: 'desc' }
+    });
+
+    const formattedMatches = matches.map(m => ({
+      ...m,
+      agentName: m.agent.fullName,
+      profileName: m.agent.profile.name,
+      requestingOrg: m.position.requestingOrg.name,
+      requestingArea: m.position.requestingArea,
+      matchDate: m.matchDate instanceof Date
+        ? m.matchDate.toISOString().split('T')[0]
+        : String(m.matchDate).split('T')[0]
+    }));
+
+    res.json(formattedMatches);
+  } catch (error) {
+    console.error('Error in GET /api/matches:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
