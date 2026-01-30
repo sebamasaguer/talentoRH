@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Agent, PositionRequest } from '../types';
+import React, { useState, useMemo } from 'react';
+import { Agent, PositionRequest, AgentStatus } from '../types';
 import { getSmartMatches, createMatch } from '../services/apiService';
 
 interface SmartMatchingProps {
@@ -14,6 +14,17 @@ const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions, onMatc
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [confirmingMatch, setConfirmingMatch] = useState<string | null>(null);
+  const [mode, setMode] = useState<'ai' | 'manual'>('ai');
+  const [agentSearch, setAgentSearch] = useState('');
+
+  const availableAgents = useMemo(() => {
+    return agents
+      .filter(a => a.status === AgentStatus.AVAILABLE)
+      .filter(a =>
+        a.fullName.toLowerCase().includes(agentSearch.toLowerCase()) ||
+        (a.profile || '').toLowerCase().includes(agentSearch.toLowerCase())
+      );
+  }, [agents, agentSearch]);
 
   const handleRunMatch = async () => {
     if (!selectedPosition) return;
@@ -41,12 +52,13 @@ const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions, onMatc
       await createMatch({
         agentId: result.agentId,
         positionId: selectedPosition.id,
-        score: result.score,
-        reasoning: result.reasoning
+        score: result.score || 100,
+        reasoning: result.reasoning || 'Asignación manual por el administrador.'
       });
       alert("¡Match confirmado exitosamente!");
       setResults([]);
       setSelectedPosition(null);
+      setAgentSearch('');
       onMatchSuccess();
     } catch (error) {
       console.error(error);
@@ -96,28 +108,82 @@ const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions, onMatc
             )}
           </div>
 
-          <button
-            onClick={handleRunMatch}
-            disabled={!selectedPosition || loading}
-            className={`w-full py-4 rounded-xl font-bold shadow-lg transition flex items-center justify-center gap-2 ${
-              !selectedPosition || loading 
-              ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
-              : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
-            }`}
-          >
-            {loading ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Procesando con Gemini...
-              </>
-            ) : (
-              <>✨ Ejecutar Análisis AI</>
-            )}
-          </button>
+          <div className="flex bg-slate-100 p-1 rounded-lg">
+            <button
+              onClick={() => setMode('ai')}
+              className={`flex-1 py-2 text-xs font-bold rounded-md transition ${mode === 'ai' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              🤖 Smart AI
+            </button>
+            <button
+              onClick={() => setMode('manual')}
+              className={`flex-1 py-2 text-xs font-bold rounded-md transition ${mode === 'manual' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              👤 Manual
+            </button>
+          </div>
+
+          {mode === 'ai' ? (
+            <button
+              onClick={handleRunMatch}
+              disabled={!selectedPosition || loading}
+              className={`w-full py-4 rounded-xl font-bold shadow-lg transition flex items-center justify-center gap-2 ${
+                !selectedPosition || loading
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+              }`}
+            >
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Procesando con Gemini...
+                </>
+              ) : (
+                <>✨ Ejecutar Análisis AI</>
+              )}
+            </button>
+          ) : (
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Buscar Agente</h4>
+              <input
+                type="text"
+                placeholder="Nombre o perfil..."
+                className="w-full p-2 text-sm border border-slate-200 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-blue-500"
+                value={agentSearch}
+                onChange={(e) => setAgentSearch(e.target.value)}
+              />
+              <div className="max-h-60 overflow-y-auto space-y-2">
+                {availableAgents.map(agent => (
+                  <button
+                    key={agent.id}
+                    onClick={() => {
+                      setResults([{
+                        agentId: agent.id,
+                        fullName: agent.fullName,
+                        score: 100,
+                        reasoning: 'Asignación manual seleccionada por el usuario.'
+                      }]);
+                    }}
+                    className={`w-full text-left p-3 rounded-lg border text-sm transition ${
+                      results[0]?.agentId === agent.id ? 'border-blue-500 bg-blue-50' : 'border-slate-100 hover:bg-slate-50'
+                    }`}
+                  >
+                    <p className="font-bold text-slate-800">{agent.fullName}</p>
+                    <p className="text-xs text-slate-500">{agent.profile} | {agent.workingHours}hs</p>
+                  </button>
+                ))}
+                {availableAgents.length === 0 && (
+                  <p className="text-center text-xs text-slate-400 py-4">No hay agentes disponibles.</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="md:col-span-2 space-y-4">
-          <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-2">2. Resultados del Matching</h4>
+          <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-2">
+            {mode === 'ai' ? '2. Resultados del Matching AI' : '2. Confirmar Selección'}
+          </h4>
           
           {!selectedPosition && (
             <div className="bg-white border-2 border-dashed border-slate-200 rounded-xl py-20 flex flex-col items-center justify-center text-slate-400">
@@ -127,7 +193,12 @@ const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions, onMatc
 
           {selectedPosition && results.length === 0 && !loading && (
             <div className="bg-white border-2 border-dashed border-slate-200 rounded-xl py-20 flex flex-col items-center justify-center text-slate-400">
-              <p>Haz clic en "Ejecutar Análisis AI" para ver recomendaciones</p>
+              <p>
+                {mode === 'ai'
+                  ? 'Haz clic en "Ejecutar Análisis AI" para ver recomendaciones'
+                  : 'Selecciona un agente de la lista de la izquierda'
+                }
+              </p>
             </div>
           )}
 
@@ -163,7 +234,9 @@ const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions, onMatc
                     </div>
                   </div>
                   <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-4">
-                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Análisis de la IA:</p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">
+                      {mode === 'ai' ? 'Análisis de la IA:' : 'Detalles de Asignación:'}
+                    </p>
                     <p className="text-sm text-slate-700 italic">"{res.reasoning}"</p>
                   </div>
 
