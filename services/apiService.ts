@@ -1,4 +1,4 @@
-import { Agent, PositionRequest, Organization, FunctionalProfile } from '../types';
+import { Agent, PositionRequest, Organization, FunctionalProfile, MatchRecord } from '../types';
 
 const API_URL = 'http://localhost:3001/api';
 
@@ -28,6 +28,13 @@ export const login = async (email: string, password: string): Promise<{ token: s
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
+  });
+  return handleResponse(response);
+};
+
+export const getMatches = async (): Promise<MatchRecord[]> => {
+  const response = await fetch(`${API_URL}/matches`, {
+    headers: getHeaders()
   });
   return handleResponse(response);
 };

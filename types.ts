@@ -55,10 +55,15 @@ export interface MatchingResult {
 }
 
 export interface MatchRecord {
-  id?: number;
+  id: number;
   agentId: string;
   positionId: string;
   matchDate: string;
   score: number;
   reasoning: string;
+  // For display
+  agentName?: string;
+  profileName?: string;
+  requestingOrg?: string;
+  requestingArea?: string;
 }
