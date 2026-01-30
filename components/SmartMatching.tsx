@@ -14,6 +14,9 @@ const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions, onMatc
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [confirmingMatch, setConfirmingMatch] = useState<string | null>(null);
+  const [matchingMode, setMatchingMode] = useState<'ai' | 'manual'>('ai');
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('');
+  const [manualReasoning, setManualReasoning] = useState<string>('');
 
   const handleRunMatch = async () => {
     if (!selectedPosition) return;
@@ -47,10 +50,43 @@ const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions, onMatc
       alert("¡Match confirmado exitosamente!");
       setResults([]);
       setSelectedPosition(null);
+      setSelectedAgentId('');
+      setManualReasoning('');
       onMatchSuccess();
     } catch (error) {
       console.error(error);
       alert("Hubo un error al confirmar el match.");
+    } finally {
+      setConfirmingMatch(null);
+    }
+  };
+
+  const handleManualMatch = async () => {
+    if (!selectedPosition || !selectedAgentId) return;
+
+    const agent = agents.find(a => a.id === selectedAgentId);
+    if (!agent) return;
+
+    if (!window.confirm(`¿Estás seguro de asignar manualmente a ${agent.fullName} a esta posición?`)) {
+      return;
+    }
+
+    setConfirmingMatch(selectedAgentId);
+    try {
+      await createMatch({
+        agentId: selectedAgentId,
+        positionId: selectedPosition.id,
+        score: 100, // Default for manual match
+        reasoning: manualReasoning || 'Asignación manual por el administrador.'
+      });
+      alert("¡Match manual confirmado exitosamente!");
+      setSelectedPosition(null);
+      setSelectedAgentId('');
+      setManualReasoning('');
+      onMatchSuccess();
+    } catch (error) {
+      console.error(error);
+      alert("Hubo un error al confirmar el match manual.");
     } finally {
       setConfirmingMatch(null);
     }
@@ -117,17 +153,96 @@ const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions, onMatc
         </div>
 
         <div className="md:col-span-2 space-y-4">
-          <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-2">2. Resultados del Matching</h4>
+          <div className="flex items-center justify-between px-2 mb-2">
+            <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest">2. Resultados del Matching</h4>
+            <div className="flex bg-slate-100 p-1 rounded-lg">
+              <button
+                onClick={() => setMatchingMode('ai')}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition ${matchingMode === 'ai' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                IA Recomendador
+              </button>
+              <button
+                onClick={() => setMatchingMode('manual')}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition ${matchingMode === 'manual' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Búsqueda Manual
+              </button>
+            </div>
+          </div>
           
           {!selectedPosition && (
             <div className="bg-white border-2 border-dashed border-slate-200 rounded-xl py-20 flex flex-col items-center justify-center text-slate-400">
-              <p>Selecciona un puesto a la izquierda para ver los candidatos ideales</p>
+              <p>Selecciona un puesto a la izquierda para comenzar</p>
             </div>
           )}
 
-          {selectedPosition && results.length === 0 && !loading && (
+          {selectedPosition && matchingMode === 'ai' && results.length === 0 && !loading && (
             <div className="bg-white border-2 border-dashed border-slate-200 rounded-xl py-20 flex flex-col items-center justify-center text-slate-400">
               <p>Haz clic en "Ejecutar Análisis AI" para ver recomendaciones</p>
+            </div>
+          )}
+
+          {selectedPosition && matchingMode === 'manual' && (
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4 animate-in fade-in duration-300">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Seleccionar Agente Disponible</label>
+                <select
+                  className="w-full p-3 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  value={selectedAgentId}
+                  onChange={(e) => setSelectedAgentId(e.target.value)}
+                >
+                  <option value="">-- Elige un agente --</option>
+                  {agents.filter(a => a.status === 'Disponible').map(a => (
+                    <option key={a.id} value={a.id}>{a.fullName} ({a.profile})</option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedAgentId && (
+                <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100 text-sm">
+                  {(() => {
+                    const agent = agents.find(a => a.id === selectedAgentId);
+                    return agent ? (
+                      <>
+                        <p className="font-bold text-indigo-900">{agent.fullName}</p>
+                        <p className="text-indigo-700 text-xs">{agent.originOrg} • {agent.workingHours}hs</p>
+                        <p className="mt-2 text-indigo-600 italic">"{agent.keyCompetencies}"</p>
+                      </>
+                    ) : null;
+                  })()}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Justificación (Opcional)</label>
+                <textarea
+                  className="w-full p-3 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                  placeholder="Escribe el motivo de la asignación manual..."
+                  rows={3}
+                  value={manualReasoning}
+                  onChange={(e) => setManualReasoning(e.target.value)}
+                />
+              </div>
+
+              <button
+                onClick={handleManualMatch}
+                disabled={!selectedAgentId || !!confirmingMatch}
+                className={`w-full py-4 rounded-xl font-bold shadow-lg transition flex items-center justify-center gap-2 ${
+                  !selectedAgentId || !!confirmingMatch
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'
+                }`}
+              >
+                {confirmingMatch === selectedAgentId ? (
+                   <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Confirmando...
+                  </>
+                ) : (
+                  <>🤝 Confirmar Asignación Manual</>
+                )}
+              </button>
             </div>
           )}
 
@@ -139,7 +254,7 @@ const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions, onMatc
              </div>
           )}
 
-          {results.length > 0 && !loading && (
+          {selectedPosition && matchingMode === 'ai' && results.length > 0 && !loading && (
             <div className="space-y-4">
               {results.map((res: any, idx: number) => (
                 <div 

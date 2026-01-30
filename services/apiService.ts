@@ -39,7 +39,7 @@ export const getMatches = async (): Promise<MatchRecord[]> => {
   return handleResponse(response);
 };
 
-export const createMatch = async (matchData: { agentId: string, positionId: string, score: number, reasoning: string }): Promise<any> => {
+export const createMatch = async (matchData: { agentId: string, positionId: string, score?: number, reasoning?: string }): Promise<any> => {
   const response = await fetch(`${API_URL}/matches`, {
     method: 'POST',
     headers: getHeaders(),
