@@ -7,6 +7,7 @@ import PositionForm from './components/PositionForm';
 import SmartMatching from './components/SmartMatching';
 import AdminPanel from './components/AdminPanel';
 import Login from './components/Login';
+import Pagination from './components/Pagination';
 import { Agent, PositionRequest, PositionStatus, AgentStatus, MatchRecord } from './types';
 import { getAgents, getPositions, saveAgent, savePosition, getMatches, deleteMatch } from './services/apiService';
 
@@ -16,6 +17,11 @@ const App: React.FC = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [positions, setPositions] = useState<PositionRequest[]>([]);
   const [matches, setMatches] = useState<MatchRecord[]>([]);
+
+  const itemsPerPage = 10;
+  const [currentPageAgents, setCurrentPageAgents] = useState(1);
+  const [currentPagePositions, setCurrentPagePositions] = useState(1);
+  const [currentPageMatches, setCurrentPageMatches] = useState(1);
 
   useEffect(() => {
     if (token) {
@@ -45,6 +51,12 @@ const App: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
 
+  useEffect(() => {
+    setCurrentPageAgents(1);
+    setCurrentPagePositions(1);
+    setCurrentPageMatches(1);
+  }, [searchQuery]);
+
   const filteredAgents = useMemo(() => {
     return agents
       .filter(a => a.status === AgentStatus.AVAILABLE)
@@ -73,6 +85,21 @@ const App: React.FC = () => {
       (m.profileName || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [matches, searchQuery]);
+
+  const paginatedAgents = useMemo(() => {
+    const start = (currentPageAgents - 1) * itemsPerPage;
+    return filteredAgents.slice(start, start + itemsPerPage);
+  }, [filteredAgents, currentPageAgents]);
+
+  const paginatedPositions = useMemo(() => {
+    const start = (currentPagePositions - 1) * itemsPerPage;
+    return filteredPositions.slice(start, start + itemsPerPage);
+  }, [filteredPositions, currentPagePositions]);
+
+  const paginatedMatches = useMemo(() => {
+    const start = (currentPageMatches - 1) * itemsPerPage;
+    return filteredMatches.slice(start, start + itemsPerPage);
+  }, [filteredMatches, currentPageMatches]);
 
   const handleSaveAgent = async (agent: Agent) => {
     try {
@@ -150,7 +177,7 @@ const App: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
-                {filteredAgents.map(agent => (
+                {paginatedAgents.map(agent => (
                   <tr key={agent.id} className="hover:bg-slate-50/50 transition">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -196,6 +223,11 @@ const App: React.FC = () => {
             {filteredAgents.length === 0 && (
               <div className="py-20 text-center text-slate-400">No se encontraron agentes.</div>
             )}
+            <Pagination
+              currentPage={currentPageAgents}
+              totalPages={Math.ceil(filteredAgents.length / itemsPerPage)}
+              onPageChange={setCurrentPageAgents}
+            />
           </div>
         </div>
       )}
@@ -234,7 +266,7 @@ const App: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
-                {filteredPositions.map(pos => (
+                {paginatedPositions.map(pos => (
                   <tr key={pos.id} className="hover:bg-slate-50/50 transition">
                     <td className="px-6 py-4">
                       <p className="font-bold text-slate-900">{pos.requestingOrg}</p>
@@ -269,6 +301,11 @@ const App: React.FC = () => {
             {filteredPositions.length === 0 && (
               <div className="py-20 text-center text-slate-400">No hay búsquedas cargadas.</div>
             )}
+            <Pagination
+              currentPage={currentPagePositions}
+              totalPages={Math.ceil(filteredPositions.length / itemsPerPage)}
+              onPageChange={setCurrentPagePositions}
+            />
           </div>
         </div>
       )}
@@ -309,7 +346,7 @@ const App: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
-                {filteredMatches.map(match => (
+                {paginatedMatches.map(match => (
                   <tr key={match.id} className="hover:bg-slate-50/50 transition">
                     <td className="px-6 py-4">
                       <p className="font-bold text-slate-900">{match.agentName}</p>
@@ -347,6 +384,11 @@ const App: React.FC = () => {
             {filteredMatches.length === 0 && (
               <div className="py-20 text-center text-slate-400">No hay matches confirmados.</div>
             )}
+            <Pagination
+              currentPage={currentPageMatches}
+              totalPages={Math.ceil(filteredMatches.length / itemsPerPage)}
+              onPageChange={setCurrentPageMatches}
+            />
           </div>
         </div>
       )}
