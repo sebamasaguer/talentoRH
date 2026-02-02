@@ -56,6 +56,7 @@ const FunctionalProfileSchema = z.object({
 const AgentSchema = z.object({
   id: z.string(),
   fullName: z.string(),
+  dni: z.string().min(1, "El DNI es obligatorio"),
   originOrgId: z.number(),
   profileId: z.number(),
   keyCompetencies: z.string().optional().nullable(),

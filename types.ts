@@ -23,6 +23,7 @@ export enum AgentStatus {
 export interface Agent {
   id: string;
   fullName: string;
+  dni: string;
   originOrgId: number;
   originOrg?: string; // For display
   profileId: number;
