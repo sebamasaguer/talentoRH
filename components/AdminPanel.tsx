@@ -1,10 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Organization, FunctionalProfile } from '../types';
 import {
   getOrganizations, saveOrganization, deleteOrganization,
   getProfiles, saveProfile, deleteProfile
 } from '../services/apiService';
+import Pagination from './Pagination';
 
 const AdminPanel: React.FC = () => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -15,6 +16,10 @@ const AdminPanel: React.FC = () => {
 
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
   const [editingProfile, setEditingProfile] = useState<FunctionalProfile | null>(null);
+
+  const itemsPerPage = 10;
+  const [currentPageOrgs, setCurrentPageOrgs] = useState(1);
+  const [currentPageProfiles, setCurrentPageProfiles] = useState(1);
 
   useEffect(() => {
     loadData();
@@ -79,6 +84,16 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  const paginatedOrgs = useMemo(() => {
+    const start = (currentPageOrgs - 1) * itemsPerPage;
+    return organizations.slice(start, start + itemsPerPage);
+  }, [organizations, currentPageOrgs]);
+
+  const paginatedProfiles = useMemo(() => {
+    const start = (currentPageProfiles - 1) * itemsPerPage;
+    return profiles.slice(start, start + itemsPerPage);
+  }, [profiles, currentPageProfiles]);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       {/* Organizations CRUD */}
@@ -114,7 +129,7 @@ const AdminPanel: React.FC = () => {
           </form>
 
           <ul className="divide-y divide-slate-100">
-            {organizations.map(org => (
+            {paginatedOrgs.map(org => (
               <li key={org.id} className="py-3 flex justify-between items-center group">
                 <span className="text-slate-700 font-medium">{org.name}</span>
                 <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition">
@@ -137,6 +152,11 @@ const AdminPanel: React.FC = () => {
               <li className="py-8 text-center text-slate-400">No hay organismos cargados.</li>
             )}
           </ul>
+          <Pagination
+            currentPage={currentPageOrgs}
+            totalPages={Math.ceil(organizations.length / itemsPerPage)}
+            onPageChange={setCurrentPageOrgs}
+          />
         </div>
       </div>
 
@@ -173,7 +193,7 @@ const AdminPanel: React.FC = () => {
           </form>
 
           <ul className="divide-y divide-slate-100">
-            {profiles.map(p => (
+            {paginatedProfiles.map(p => (
               <li key={p.id} className="py-3 flex justify-between items-center group">
                 <span className="text-slate-700 font-medium">{p.name}</span>
                 <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition">
@@ -196,6 +216,11 @@ const AdminPanel: React.FC = () => {
               <li className="py-8 text-center text-slate-400">No hay perfiles cargados.</li>
             )}
           </ul>
+          <Pagination
+            currentPage={currentPageProfiles}
+            totalPages={Math.ceil(profiles.length / itemsPerPage)}
+            onPageChange={setCurrentPageProfiles}
+          />
         </div>
       </div>
     </div>
