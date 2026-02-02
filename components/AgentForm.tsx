@@ -16,6 +16,7 @@ const AgentForm: React.FC<AgentFormProps> = ({ onSave, onCancel, initialData }) 
   const [formData, setFormData] = useState<Agent>(initialData || {
     id: `A-${Math.floor(Math.random() * 900) + 100}`,
     fullName: '',
+    dni: '',
     originOrgId: 0,
     profileId: 0,
     keyCompetencies: '',
@@ -82,6 +83,17 @@ const AgentForm: React.FC<AgentFormProps> = ({ onSave, onCancel, initialData }) 
               onChange={e => setFormData({...formData, fullName: e.target.value})}
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" 
               placeholder="Ej. Juan Pérez"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700">DNI</label>
+            <input
+              required
+              value={formData.dni}
+              onChange={e => setFormData({...formData, dni: e.target.value})}
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              placeholder="Ej. 12345678"
             />
           </div>
 

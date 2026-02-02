@@ -35,6 +35,7 @@ enum AgentStatus {
 model Agent {
   id                   String            @id @db.VarChar(20)
   fullName             String            @db.VarChar(100)
+  dni                  String            @db.VarChar(20)
   originOrgId          Int
   originOrg            Organization      @relation(fields: [originOrgId], references: [id])
   profileId            Int
