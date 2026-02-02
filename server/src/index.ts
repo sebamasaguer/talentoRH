@@ -397,6 +397,44 @@ app.get('/api/matches', async (req, res) => {
   }
 });
 
+app.delete('/api/matches/:id', async (req, res) => {
+  try {
+    const matchId = parseInt(req.params.id);
+
+    await prisma.$transaction(async (tx) => {
+      const match = await tx.match.findUnique({
+        where: { id: matchId }
+      });
+
+      if (!match) {
+        throw new Error('Match not found');
+      }
+
+      // 1. Eliminar el registro del Match
+      await tx.match.delete({
+        where: { id: matchId }
+      });
+
+      // 2. Cambiar el estado del agente a 'Disponible'
+      await tx.agent.update({
+        where: { id: match.agentId },
+        data: { status: 'Disponible' }
+      });
+
+      // 3. Cambiar el estado de la búsqueda a 'Abierta'
+      await tx.position.update({
+        where: { id: match.positionId },
+        data: { status: 'Abierta' }
+      });
+    });
+
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Error deleting match:', error);
+    res.status(400).json({ error: error.message || 'No se pudo eliminar el match y actualizar los estados.' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

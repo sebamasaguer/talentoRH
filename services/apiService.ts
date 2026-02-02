@@ -32,6 +32,14 @@ export const login = async (email: string, password: string): Promise<{ token: s
   return handleResponse(response);
 };
 
+export const deleteMatch = async (id: number): Promise<void> => {
+  const response = await fetch(`${API_URL}/matches/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
 export const getMatches = async (): Promise<MatchRecord[]> => {
   const response = await fetch(`${API_URL}/matches`, {
     headers: getHeaders()

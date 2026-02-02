@@ -8,7 +8,7 @@ import SmartMatching from './components/SmartMatching';
 import AdminPanel from './components/AdminPanel';
 import Login from './components/Login';
 import { Agent, PositionRequest, PositionStatus, AgentStatus, MatchRecord } from './types';
-import { getAgents, getPositions, saveAgent, savePosition, getMatches } from './services/apiService';
+import { getAgents, getPositions, saveAgent, savePosition, getMatches, deleteMatch } from './services/apiService';
 
 const App: React.FC = () => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
@@ -93,6 +93,18 @@ const App: React.FC = () => {
       setEditingPosition(undefined);
     } catch (error) {
       console.error('Error saving position:', error);
+    }
+  };
+
+  const handleDeleteMatch = async (matchId: number) => {
+    if (window.confirm('¿Está seguro de que desea eliminar este match? El agente volverá a estar disponible y la búsqueda se abrirá nuevamente.')) {
+      try {
+        await deleteMatch(matchId);
+        await fetchData();
+      } catch (error) {
+        console.error('Error deleting match:', error);
+        alert('No se pudo eliminar el match.');
+      }
     }
   };
 
@@ -293,6 +305,7 @@ const App: React.FC = () => {
                   <th className="px-6 py-4">Fecha Match</th>
                   <th className="px-6 py-4 text-center">Score</th>
                   <th className="px-6 py-4">Justificación</th>
+                  <th className="px-6 py-4 text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
@@ -318,6 +331,14 @@ const App: React.FC = () => {
                       <p className="text-slate-500 max-w-xs truncate" title={match.reasoning}>
                         {match.reasoning}
                       </p>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleDeleteMatch(match.id)}
+                        className="text-red-600 hover:underline font-medium"
+                      >
+                        Eliminar
+                      </button>
                     </td>
                   </tr>
                 ))}
