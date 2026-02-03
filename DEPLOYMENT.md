@@ -10,7 +10,7 @@ ssh usuario@ip-del-servidor
 ```
 
 ### Instalar dependencias básicas
-Actualice el sistema e instale Node.js, PostgreSQL y Nginx.
+Actualice el sistema e instale Node.js, PostgreSQL y un servidor web (Nginx o Apache).
 
 ```bash
 # Actualizar repositorios
@@ -23,8 +23,9 @@ sudo apt-get install -y nodejs
 # Instalar PostgreSQL
 sudo apt install postgresql postgresql-contrib -y
 
-# Instalar Nginx y Git
-sudo apt install nginx git -y
+# Instalar Nginx O Apache y Git
+sudo apt install nginx git -y  # Para Nginx
+# O bien: sudo apt install apache2 git -y # Para Apache
 
 # Instalar PM2 globalmente (para mantener el backend corriendo)
 sudo npm install -g pm2
@@ -128,44 +129,97 @@ git clone <URL_DEL_REPOSITORIO> .
    ```
    Esto generará una carpeta `dist/` en la raíz.
 
-## 4. Configuración de Nginx (Reverse Proxy)
+## 4. Configuración del Servidor Web (Reverse Proxy)
 
-Configure Nginx para servir el frontend y redirigir las peticiones `/api` al backend.
+Puede elegir entre Nginx o Apache para servir el frontend y redirigir las peticiones `/api` al backend.
 
-```bash
-sudo nano /etc/nginx/sites-available/talento-hr
-```
+### Opción A: Nginx
 
-Contenido del archivo:
-```nginx
-server {
-    listen 80;
-    server_name su-dominio.com; # O la IP del servidor
+1. Cree el archivo de configuración:
+   ```bash
+   sudo nano /etc/nginx/sites-available/talento-hr
+   ```
 
-    root /var/www/talento-hr/dist;
-    index index.html;
+2. Contenido del archivo:
+   ```nginx
+   server {
+       listen 80;
+       server_name su-dominio.com; # O la IP del servidor
 
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
+       root /var/www/talento-hr/dist;
+       index index.html;
 
-    location /api {
-        proxy_pass http://localhost:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
+       location / {
+           try_files $uri $uri/ /index.html;
+       }
 
-Habilite el sitio y reinicie Nginx:
-```bash
-sudo ln -s /etc/nginx/sites-available/talento-hr /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-```
+       location /api {
+           proxy_pass http://localhost:3001;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+       }
+   }
+   ```
+
+3. Habilite el sitio y reinicie Nginx:
+   ```bash
+   sudo ln -s /etc/nginx/sites-available/talento-hr /etc/nginx/sites-enabled/
+   sudo nginx -t
+   sudo systemctl restart nginx
+   ```
+
+### Opción B: Apache
+
+1. Habilite los módulos necesarios:
+   ```bash
+   sudo a2enmod proxy proxy_http rewrite
+   ```
+
+2. Cree el archivo de configuración:
+   ```bash
+   sudo nano /etc/apache2/sites-available/talento-hr.conf
+   ```
+
+3. Contenido del archivo:
+   ```apache
+   <VirtualHost *:80>
+       ServerName su-dominio.com
+       DocumentRoot /var/www/talento-hr/dist
+
+       <Directory /var/www/talento-hr/dist>
+           Options Indexes FollowSymLinks
+           AllowOverride All
+           Require all granted
+
+           # Manejo de rutas para SPA (React Router)
+           RewriteEngine On
+           RewriteBase /
+           RewriteRule ^index\.html$ - [L]
+           RewriteCond %{REQUEST_FILENAME} !-f
+           RewriteCond %{REQUEST_FILENAME} !-d
+           RewriteCond %{REQUEST_FILENAME} !-l
+           RewriteRule . /index.html [L]
+       </Directory>
+
+       # Proxy para el Backend
+       ProxyPreserveHost On
+       ProxyPass /api http://localhost:3001/api
+       ProxyPassReverse /api http://localhost:3001/api
+
+       ErrorLog ${APACHE_LOG_DIR}/talento-error.log
+       CustomLog ${APACHE_LOG_DIR}/talento-access.log combined
+   </VirtualHost>
+   ```
+
+4. Habilite el sitio y reinicie Apache:
+   ```bash
+   sudo a2ensite talento-hr.conf
+   sudo apache2ctl configtest
+   sudo systemctl restart apache2
+   ```
 
 ## 5. Mantenimiento y Logs
 
