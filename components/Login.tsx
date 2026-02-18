@@ -33,7 +33,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-slate-200">
         <div>
           <h1 className="text-center text-3xl font-extrabold text-slate-900">
-            <span className="text-blue-600 font-black">Talento</span>HR
+            <span className="text-blue-600 font-black">Talento</span>RH
           </h1>
           <h2 className="mt-6 text-center text-xl font-bold text-slate-700">
             Iniciar sesión en el sistema

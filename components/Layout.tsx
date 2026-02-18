@@ -14,7 +14,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
       <aside className="w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col">
         <div className="p-6 border-b border-slate-800">
           <h1 className="text-xl font-bold flex items-center gap-2">
-            <span className="text-blue-400 font-black">Talento</span>HR
+            <span className="text-blue-400 font-black">Talento</span>RH
           </h1>
         </div>
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
