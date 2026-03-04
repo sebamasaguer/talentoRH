@@ -10,6 +10,7 @@ import Login from './components/Login';
 import Pagination from './components/Pagination';
 import { Agent, PositionRequest, PositionStatus, AgentStatus, MatchRecord } from './types';
 import { getAgents, getPositions, saveAgent, savePosition, getMatches, deleteMatch } from './services/apiService';
+import { exportToExcel } from './services/exportService';
 
 const App: React.FC = () => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
@@ -135,6 +136,50 @@ const App: React.FC = () => {
     }
   };
 
+  const handleExportAgents = () => {
+    const dataToExport = filteredAgents.map(a => ({
+      'ID': a.id,
+      'Nombre Completo': a.fullName,
+      'DNI': a.dni,
+      'Organismo Origen': a.originOrg,
+      'Perfil': a.profile,
+      'Competencias Clave': a.keyCompetencies,
+      'Horas Semanales': a.workingHours,
+      'Disponible para Rotación': a.availableForRotation ? 'Sí' : 'No',
+      'Fecha Entrevista': a.interviewDate,
+      'Estado': a.status
+    }));
+    exportToExcel(dataToExport, `Agentes_${new Date().toISOString().split('T')[0]}`, 'Agentes');
+  };
+
+  const handleExportPositions = () => {
+    const dataToExport = filteredPositions.map(p => ({
+      'ID': p.id,
+      'Organismo Solicitante': p.requestingOrg,
+      'Área Solicitante': p.requestingArea,
+      'Perfil Requerido': p.profileRequired,
+      'Horas Requeridas': p.hoursRequired,
+      'Funciones Principales': p.mainFunctions,
+      'Fecha Solicitud': p.requestDate,
+      'Estado': p.status
+    }));
+    exportToExcel(dataToExport, `Pedidos_${new Date().toISOString().split('T')[0]}`, 'Pedidos');
+  };
+
+  const handleExportMatches = () => {
+    const dataToExport = filteredMatches.map(m => ({
+      'ID': m.id,
+      'Agente': m.agentName,
+      'Perfil': m.profileName,
+      'Organismo Destino': m.requestingOrg,
+      'Área Destino': m.requestingArea,
+      'Fecha Match': m.matchDate,
+      'Score': `${m.score}%`,
+      'Justificación': m.reasoning
+    }));
+    exportToExcel(dataToExport, `Matches_${new Date().toISOString().split('T')[0]}`, 'Matches');
+  };
+
   if (!token) {
     return <Login onLoginSuccess={(newToken) => setToken(newToken)} />;
   }
@@ -156,12 +201,20 @@ const App: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <button 
-              onClick={() => setShowAgentForm(true)}
-              className="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-100 flex items-center gap-2"
-            >
-              <span>+</span> Nueva Entrevista
-            </button>
+            <div className="flex gap-2 w-full md:w-auto">
+              <button
+                onClick={handleExportAgents}
+                className="flex-1 md:flex-none bg-white text-slate-700 border border-slate-200 px-5 py-2 rounded-lg font-semibold hover:bg-slate-50 transition flex items-center justify-center gap-2"
+              >
+                📥 Exportar Excel
+              </button>
+              <button
+                onClick={() => setShowAgentForm(true)}
+                className="flex-1 md:flex-none bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-100 flex items-center justify-center gap-2"
+              >
+                <span>+</span> Nueva Entrevista
+              </button>
+            </div>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -245,12 +298,20 @@ const App: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <button 
-              onClick={() => setShowPositionForm(true)}
-              className="bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 flex items-center gap-2"
-            >
-              <span>+</span> Cargar Pedido
-            </button>
+            <div className="flex gap-2 w-full md:w-auto">
+              <button
+                onClick={handleExportPositions}
+                className="flex-1 md:flex-none bg-white text-slate-700 border border-slate-200 px-5 py-2 rounded-lg font-semibold hover:bg-slate-50 transition flex items-center justify-center gap-2"
+              >
+                📥 Exportar Excel
+              </button>
+              <button
+                onClick={() => setShowPositionForm(true)}
+                className="flex-1 md:flex-none bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
+              >
+                <span>+</span> Cargar Pedido
+              </button>
+            </div>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -331,6 +392,12 @@ const App: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            <button
+              onClick={handleExportMatches}
+              className="w-full md:w-auto bg-white text-slate-700 border border-slate-200 px-5 py-2 rounded-lg font-semibold hover:bg-slate-50 transition flex items-center justify-center gap-2"
+            >
+              📥 Exportar Excel
+            </button>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">

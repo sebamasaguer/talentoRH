@@ -62,6 +62,7 @@ async function main() {
     {
       id: 'AG-1001',
       fullName: 'Juan Pérez',
+      dni: '20111222',
       originOrgId: orgs[0].id, // Salud
       profileId: profiles[1].id, // Profesional
       keyCompetencies: 'Gestión de proyectos, Auditoría, Liderazgo de equipos',
@@ -72,6 +73,7 @@ async function main() {
     {
       id: 'AG-1002',
       fullName: 'María García',
+      dni: '30444555',
       originOrgId: orgs[1].id, // Economía
       profileId: profiles[0].id, // Administrativo
       keyCompetencies: 'Atención al público, Manejo de Excel avanzado, Liquidación de haberes',
@@ -82,6 +84,7 @@ async function main() {
     {
       id: 'AG-1003',
       fullName: 'Ricardo Darín',
+      dni: '10777888',
       originOrgId: orgs[2].id, // Educación
       profileId: profiles[2].id, // Técnico
       keyCompetencies: 'Mantenimiento preventivo, Redes, Soporte técnico',
