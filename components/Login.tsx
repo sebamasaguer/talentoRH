@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { login } from '../services/apiService';
+import logo from '@/logorh.png';
 
 interface LoginProps {
   onLoginSuccess: (token: string) => void;
@@ -31,7 +32,8 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-slate-200">
-        <div>
+        <div className="flex flex-col items-center">
+          <img src={logo} alt="Talento RH Logo" className="h-16 w-auto mb-4" />
           <h1 className="text-center text-3xl font-extrabold text-slate-900">
             <span className="text-blue-600 font-black">Talento</span>RH
           </h1>
