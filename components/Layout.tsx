@@ -1,5 +1,6 @@
 
 import React from 'react';
+import logo from '@/logorh.png';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,10 +13,8 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
     <div className="flex h-screen overflow-hidden bg-slate-50">
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col">
-        <div className="p-6 border-b border-slate-800">
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <span className="text-blue-400 font-black">Talento</span>RH
-          </h1>
+        <div className="p-6 border-b border-slate-800 flex justify-center">
+          <img src={logo} alt="Talento RH Logo" className="h-20 w-auto" />
         </div>
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <button 
