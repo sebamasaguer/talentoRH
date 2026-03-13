@@ -1,7 +1,5 @@
 import { Agent, PositionRequest, Organization, FunctionalProfile, MatchRecord } from '../types';
-
-const API_URL = 'http://localhost:3001/api';
-
+const API_URL = '/api';
 const getHeaders = () => {
   const token = localStorage.getItem('token');
   const headers: any = { 'Content-Type': 'application/json' };
