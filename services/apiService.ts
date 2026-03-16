@@ -1,4 +1,4 @@
-import { Agent, PositionRequest, Organization, FunctionalProfile, MatchRecord } from '../types';
+import { Agent, PositionRequest, Organization, FunctionalProfile, MatchRecord, User } from '../types';
 const API_URL = '/api';
 const getHeaders = () => {
   const token = localStorage.getItem('token');
@@ -113,6 +113,30 @@ export const saveProfile = async (profile: Partial<FunctionalProfile>): Promise<
 
 export const deleteProfile = async (id: number): Promise<void> => {
   const response = await fetch(`${API_URL}/profiles/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
+export const getUsers = async (): Promise<User[]> => {
+  const response = await fetch(`${API_URL}/users`, {
+    headers: getHeaders()
+  });
+  return handleResponse(response);
+};
+
+export const saveUser = async (user: Partial<User>): Promise<User> => {
+  const response = await fetch(`${API_URL}/users`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(user),
+  });
+  return handleResponse(response);
+};
+
+export const deleteUser = async (id: number): Promise<void> => {
+  const response = await fetch(`${API_URL}/users/${id}`, {
     method: 'DELETE',
     headers: getHeaders(),
   });

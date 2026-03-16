@@ -68,3 +68,9 @@ export interface MatchRecord {
   requestingOrg?: string;
   requestingArea?: string;
 }
+
+export interface User {
+  id: number;
+  email: string;
+  password?: string;
+}
