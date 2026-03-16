@@ -8,12 +8,16 @@ import SmartMatching from './components/SmartMatching';
 import AdminPanel from './components/AdminPanel';
 import Login from './components/Login';
 import Pagination from './components/Pagination';
-import { Agent, PositionRequest, PositionStatus, AgentStatus, MatchRecord } from './types';
+import { Agent, PositionRequest, PositionStatus, AgentStatus, MatchRecord, User, UserRole } from './types';
 import { getAgents, getPositions, saveAgent, savePosition, getMatches, deleteMatch } from './services/apiService';
 import { exportToExcel } from './services/exportService';
 
 const App: React.FC = () => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [activeTab, setActiveTab] = useState<'dashboard' | 'supply' | 'demand' | 'matching' | 'matches' | 'admin'>('dashboard');
   const [agents, setAgents] = useState<Agent[]>([]);
   const [positions, setPositions] = useState<PositionRequest[]>([]);
@@ -181,7 +185,10 @@ const App: React.FC = () => {
   };
 
   if (!token) {
-    return <Login onLoginSuccess={(newToken) => setToken(newToken)} />;
+    return <Login onLoginSuccess={(newToken, user) => {
+      setToken(newToken);
+      setCurrentUser(user);
+    }} />;
   }
 
   return (
@@ -208,12 +215,14 @@ const App: React.FC = () => {
               >
                 📥 Exportar Excel
               </button>
-              <button
-                onClick={() => setShowAgentForm(true)}
-                className="flex-1 md:flex-none bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-100 flex items-center justify-center gap-2"
-              >
-                <span>+</span> Nueva Entrevista
-              </button>
+              {currentUser?.role !== UserRole.VISOR && (
+                <button
+                  onClick={() => setShowAgentForm(true)}
+                  className="flex-1 md:flex-none bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-100 flex items-center justify-center gap-2"
+                >
+                  <span>+</span> Nueva Entrevista
+                </button>
+              )}
             </div>
           </div>
 
@@ -262,12 +271,14 @@ const App: React.FC = () => {
                       </p>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <button 
-                        onClick={() => { setEditingAgent(agent); setShowAgentForm(true); }}
-                        className="text-blue-600 hover:underline font-medium"
-                      >
-                        Editar
-                      </button>
+                      {currentUser?.role !== UserRole.VISOR && (
+                        <button
+                          onClick={() => { setEditingAgent(agent); setShowAgentForm(true); }}
+                          className="text-blue-600 hover:underline font-medium"
+                        >
+                          Editar
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -305,12 +316,14 @@ const App: React.FC = () => {
               >
                 📥 Exportar Excel
               </button>
-              <button
-                onClick={() => setShowPositionForm(true)}
-                className="flex-1 md:flex-none bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
-              >
-                <span>+</span> Cargar Pedido
-              </button>
+              {currentUser?.role !== UserRole.VISOR && (
+                <button
+                  onClick={() => setShowPositionForm(true)}
+                  className="flex-1 md:flex-none bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
+                >
+                  <span>+</span> Cargar Pedido
+                </button>
+              )}
             </div>
           </div>
 
@@ -348,12 +361,14 @@ const App: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-slate-500">{pos.requestDate}</td>
                     <td className="px-6 py-4 text-center">
-                      <button 
-                        onClick={() => { setEditingPosition(pos); setShowPositionForm(true); }}
-                        className="text-indigo-600 hover:underline font-medium"
-                      >
-                        Gestionar
-                      </button>
+                      {currentUser?.role !== UserRole.VISOR && (
+                        <button
+                          onClick={() => { setEditingPosition(pos); setShowPositionForm(true); }}
+                          className="text-indigo-600 hover:underline font-medium"
+                        >
+                          Gestionar
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -437,12 +452,14 @@ const App: React.FC = () => {
                       </p>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => handleDeleteMatch(match.id)}
-                        className="text-red-600 hover:underline font-medium"
-                      >
-                        Eliminar
-                      </button>
+                      {currentUser?.role !== UserRole.VISOR && (
+                        <button
+                          onClick={() => handleDeleteMatch(match.id)}
+                          className="text-red-600 hover:underline font-medium"
+                        >
+                          Eliminar
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

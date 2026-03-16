@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Agent, PositionRequest } from '../types';
+import { Agent, PositionRequest, User, UserRole } from '../types';
 import { getSmartMatches, createMatch } from '../services/apiService';
 
 interface SmartMatchingProps {
@@ -10,6 +10,10 @@ interface SmartMatchingProps {
 }
 
 const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions, onMatchSuccess }) => {
+  const [currentUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [selectedPosition, setSelectedPosition] = useState<PositionRequest | null>(null);
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -282,24 +286,26 @@ const SmartMatching: React.FC<SmartMatchingProps> = ({ agents, positions, onMatc
                     <p className="text-sm text-slate-700 italic">"{res.reasoning}"</p>
                   </div>
 
-                  <button
-                    onClick={() => handleConfirmMatch(res)}
-                    disabled={!!confirmingMatch}
-                    className={`w-full py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-2 ${
-                      confirmingMatch === res.agentId
-                      ? 'bg-amber-100 text-amber-600'
-                      : 'bg-green-600 text-white hover:bg-green-700'
-                    }`}
-                  >
-                    {confirmingMatch === res.agentId ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin"></div>
-                        Confirmando...
-                      </>
-                    ) : (
-                      <>✅ Confirmar Asignación</>
-                    )}
-                  </button>
+                  {currentUser?.role !== UserRole.VISOR && (
+                    <button
+                      onClick={() => handleConfirmMatch(res)}
+                      disabled={!!confirmingMatch}
+                      className={`w-full py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-2 ${
+                        confirmingMatch === res.agentId
+                        ? 'bg-amber-100 text-amber-600'
+                        : 'bg-green-600 text-white hover:bg-green-700'
+                      }`}
+                    >
+                      {confirmingMatch === res.agentId ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin"></div>
+                          Confirmando...
+                        </>
+                      ) : (
+                        <>✅ Confirmar Asignación</>
+                      )}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

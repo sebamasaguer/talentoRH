@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import logo from '../public/logorh.png';
+import { User } from '../types';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,11 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) => {
+  const [currentUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
       {/* Sidebar */}
@@ -80,15 +86,24 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
             <button
               onClick={() => {
                 localStorage.removeItem('token');
+                localStorage.removeItem('user');
                 window.location.reload();
               }}
               className="text-sm font-medium text-slate-500 hover:text-red-600 transition"
             >
               Cerrar Sesión
             </button>
-            <div className="relative">
-               <span className="block w-3 h-3 bg-green-500 rounded-full absolute -top-0.5 -right-0.5 border-2 border-white"></span>
-               <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-600 font-bold">AD</div>
+            <div className="flex items-center gap-3">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold text-slate-800 leading-none">{currentUser?.email.split('@')[0]}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-1">{currentUser?.role}</p>
+              </div>
+              <div className="relative">
+                <span className="block w-3 h-3 bg-green-500 rounded-full absolute -top-0.5 -right-0.5 border-2 border-white"></span>
+                <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-600 font-bold">
+                  {currentUser?.email[0].toUpperCase()}
+                </div>
+              </div>
             </div>
           </div>
         </header>

@@ -69,8 +69,15 @@ export interface MatchRecord {
   requestingArea?: string;
 }
 
+export enum UserRole {
+  SUPERADMIN = 'SUPERADMIN',
+  ADMIN = 'ADMIN',
+  VISOR = 'VISOR'
+}
+
 export interface User {
   id: number;
   email: string;
   password?: string;
+  role: UserRole;
 }

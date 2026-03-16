@@ -34,6 +34,16 @@ const authenticateToken = (req: any, res: any, next: any) => {
   });
 };
 
+// Middleware to check user roles
+const authorize = (roles: string[]) => {
+  return (req: any, res: any, next: any) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'No tiene permisos para realizar esta acción.' });
+    }
+    next();
+  };
+};
+
 // Apply authentication middleware to all /api routes
 app.use('/api', authenticateToken);
 
@@ -56,7 +66,8 @@ const FunctionalProfileSchema = z.object({
 const UserSchema = z.object({
   id: z.number().optional(),
   email: z.string().email(),
-  password: z.string().min(6).optional()
+  password: z.string().min(6).optional(),
+  role: z.enum(['SUPERADMIN', 'ADMIN', 'VISOR']).default('ADMIN')
 });
 
 const AgentSchema = z.object({
@@ -105,8 +116,8 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '8h' });
-    res.json({ token, user: { id: user.id, email: user.email } });
+    const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '8h' });
+    res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
   } catch (error) {
     res.status(400).json({ error });
   }
@@ -123,7 +134,7 @@ app.get('/api/organizations', async (req, res) => {
   }
 });
 
-app.post('/api/organizations', async (req, res) => {
+app.post('/api/organizations', authorize(['ADMIN', 'SUPERADMIN']), async (req, res) => {
   try {
     const data = OrganizationSchema.parse(req.body);
     const org = await prisma.organization.upsert({
@@ -137,7 +148,7 @@ app.post('/api/organizations', async (req, res) => {
   }
 });
 
-app.delete('/api/organizations/:id', async (req, res) => {
+app.delete('/api/organizations/:id', authorize(['ADMIN', 'SUPERADMIN']), async (req, res) => {
   try {
     await prisma.organization.delete({ where: { id: parseInt(req.params.id) } });
     res.json({ success: true });
@@ -156,7 +167,7 @@ app.get('/api/profiles', async (req, res) => {
   }
 });
 
-app.post('/api/profiles', async (req, res) => {
+app.post('/api/profiles', authorize(['ADMIN', 'SUPERADMIN']), async (req, res) => {
   try {
     const data = FunctionalProfileSchema.parse(req.body);
     const profile = await prisma.functionalProfile.upsert({
@@ -170,7 +181,7 @@ app.post('/api/profiles', async (req, res) => {
   }
 });
 
-app.delete('/api/profiles/:id', async (req, res) => {
+app.delete('/api/profiles/:id', authorize(['ADMIN', 'SUPERADMIN']), async (req, res) => {
   try {
     await prisma.functionalProfile.delete({ where: { id: parseInt(req.params.id) } });
     res.json({ success: true });
@@ -180,10 +191,15 @@ app.delete('/api/profiles/:id', async (req, res) => {
 });
 
 // Users
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', authorize(['ADMIN', 'SUPERADMIN']), async (req, res) => {
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, email: true },
+      where: {
+        role: {
+          not: 'SUPERADMIN'
+        }
+      },
+      select: { id: true, email: true, role: true },
       orderBy: { email: 'asc' }
     });
     res.json(users);
@@ -192,15 +208,20 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-app.post('/api/users', async (req, res) => {
+app.post('/api/users', authorize(['ADMIN', 'SUPERADMIN']), async (req, res) => {
   try {
     const data = UserSchema.parse(req.body);
+
+    // Prevent non-SUPERADMIN from creating SUPERADMIN
+    if (data.role === 'SUPERADMIN' && req.user.role !== 'SUPERADMIN') {
+      return res.status(403).json({ error: 'Solo los superadministradores pueden crear otros superadministradores.' });
+    }
 
     if (!data.id && !data.password) {
       return res.status(400).json({ error: 'La contraseña es obligatoria para nuevos usuarios.' });
     }
 
-    const updateData: any = { email: data.email };
+    const updateData: any = { email: data.email, role: data.role };
     if (data.password) {
       updateData.password = await bcrypt.hash(data.password, 10);
     }
@@ -211,6 +232,7 @@ app.post('/api/users', async (req, res) => {
       create: {
         email: data.email,
         password: updateData.password || '', // updateData.password is guaranteed if no id
+        role: data.role,
       },
     });
 
@@ -221,8 +243,14 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-app.delete('/api/users/:id', async (req, res) => {
+app.delete('/api/users/:id', authorize(['ADMIN', 'SUPERADMIN']), async (req, res) => {
   try {
+    // Prevent deleting a SUPERADMIN
+    const userToDelete = await prisma.user.findUnique({ where: { id: parseInt(req.params.id) } });
+    if (userToDelete?.role === 'SUPERADMIN') {
+      return res.status(403).json({ error: 'No se puede eliminar a un superadministrador.' });
+    }
+
     await prisma.user.delete({ where: { id: parseInt(req.params.id) } });
     res.json({ success: true });
   } catch (error) {
@@ -252,7 +280,7 @@ app.get('/api/agents', async (req, res) => {
   }
 });
 
-app.post('/api/agents', async (req, res) => {
+app.post('/api/agents', authorize(['ADMIN', 'SUPERADMIN']), async (req, res) => {
   try {
     const data = AgentSchema.parse(req.body);
     const agent = await prisma.agent.upsert({
@@ -295,7 +323,7 @@ app.get('/api/positions', async (req, res) => {
   }
 });
 
-app.post('/api/positions', async (req, res) => {
+app.post('/api/positions', authorize(['ADMIN', 'SUPERADMIN']), async (req, res) => {
   try {
     const data = PositionSchema.parse(req.body);
     const position = await prisma.position.upsert({
@@ -318,7 +346,7 @@ app.post('/api/positions', async (req, res) => {
   }
 });
 
-app.post('/api/matching', async (req, res) => {
+app.post('/api/matching', authorize(['ADMIN', 'SUPERADMIN']), async (req, res) => {
   try {
     const { positionId } = req.body;
 
@@ -386,7 +414,7 @@ app.post('/api/matching', async (req, res) => {
   }
 });
 
-app.post('/api/matches', async (req, res) => {
+app.post('/api/matches', authorize(['ADMIN', 'SUPERADMIN']), async (req, res) => {
   try {
     const { agentId, positionId, score, reasoning } = MatchSchema.parse(req.body);
 
@@ -455,7 +483,7 @@ app.get('/api/matches', async (req, res) => {
   }
 });
 
-app.delete('/api/matches/:id', async (req, res) => {
+app.delete('/api/matches/:id', authorize(['ADMIN', 'SUPERADMIN']), async (req, res) => {
   try {
     const matchId = parseInt(req.params.id);
 

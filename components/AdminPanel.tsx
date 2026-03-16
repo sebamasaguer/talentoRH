@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Organization, FunctionalProfile, User } from '../types';
+import { Organization, FunctionalProfile, User, UserRole } from '../types';
 import {
   getOrganizations, saveOrganization, deleteOrganization,
   getProfiles, saveProfile, deleteProfile,
@@ -9,6 +9,10 @@ import {
 import Pagination from './Pagination';
 
 const AdminPanel: React.FC = () => {
+  const [currentUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [profiles, setProfiles] = useState<FunctionalProfile[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -17,6 +21,7 @@ const AdminPanel: React.FC = () => {
   const [newProfileName, setNewProfileName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserRole, setNewUserRole] = useState<UserRole>(UserRole.ADMIN);
 
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
   const [editingProfile, setEditingProfile] = useState<FunctionalProfile | null>(null);
@@ -98,10 +103,12 @@ const AdminPanel: React.FC = () => {
       await saveUser({
         id: editingUser?.id,
         email: newUserEmail,
-        password: newUserPassword || undefined
+        password: newUserPassword || undefined,
+        role: newUserRole
       });
       setNewUserEmail('');
       setNewUserPassword('');
+      setNewUserRole(UserRole.ADMIN);
       setEditingUser(null);
       loadData();
     } catch (error: any) {
@@ -144,6 +151,7 @@ const AdminPanel: React.FC = () => {
           <h3 className="font-bold text-slate-800 text-lg">Gestionar Organismos</h3>
         </div>
         <div className="p-6">
+          {currentUser?.role !== UserRole.VISOR && (
           <form onSubmit={handleSaveOrg} className="flex gap-2 mb-6">
             <input
               type="text"
@@ -169,11 +177,13 @@ const AdminPanel: React.FC = () => {
               </button>
             )}
           </form>
+          )}
 
           <ul className="divide-y divide-slate-100">
             {paginatedOrgs.map(org => (
               <li key={org.id} className="py-3 flex justify-between items-center group">
                 <span className="text-slate-700 font-medium">{org.name}</span>
+                {currentUser?.role !== UserRole.VISOR && (
                 <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition">
                   <button
                     onClick={() => { setEditingOrg(org); setNewOrgName(org.name); }}
@@ -188,6 +198,7 @@ const AdminPanel: React.FC = () => {
                     Eliminar
                   </button>
                 </div>
+                )}
               </li>
             ))}
             {organizations.length === 0 && (
@@ -208,6 +219,7 @@ const AdminPanel: React.FC = () => {
             <h3 className="font-bold text-slate-800 text-lg">Gestionar Perfiles Funcionales</h3>
           </div>
           <div className="p-6">
+            {currentUser?.role !== UserRole.VISOR && (
             <form onSubmit={handleSaveProfile} className="flex gap-2 mb-6">
               <input
                 type="text"
@@ -233,11 +245,13 @@ const AdminPanel: React.FC = () => {
                 </button>
               )}
             </form>
+            )}
 
             <ul className="divide-y divide-slate-100">
               {paginatedProfiles.map(p => (
                 <li key={p.id} className="py-3 flex justify-between items-center group">
                   <span className="text-slate-700 font-medium">{p.name}</span>
+                  {currentUser?.role !== UserRole.VISOR && (
                   <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition">
                     <button
                       onClick={() => { setEditingProfile(p); setNewProfileName(p.name); }}
@@ -252,6 +266,7 @@ const AdminPanel: React.FC = () => {
                       Eliminar
                     </button>
                   </div>
+                  )}
                 </li>
               ))}
               {profiles.length === 0 && (
@@ -273,6 +288,7 @@ const AdminPanel: React.FC = () => {
           <h3 className="font-bold text-slate-800 text-lg">Gestionar Usuarios</h3>
         </div>
         <div className="p-6">
+          {currentUser?.role !== UserRole.VISOR && (
           <form onSubmit={handleSaveUser} className="flex flex-col gap-2 mb-6">
             <input
               type="email"
@@ -290,6 +306,15 @@ const AdminPanel: React.FC = () => {
               className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
               required={!editingUser}
             />
+            <select
+              value={newUserRole}
+              onChange={(e) => setNewUserRole(e.target.value as UserRole)}
+              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white"
+            >
+              <option value={UserRole.ADMIN}>Administrador</option>
+              <option value={UserRole.VISOR}>Visor</option>
+            </select>
+
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -304,6 +329,7 @@ const AdminPanel: React.FC = () => {
                     setEditingUser(null);
                     setNewUserEmail('');
                     setNewUserPassword('');
+                    setNewUserRole(UserRole.ADMIN);
                   }}
                   className="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300 transition"
                 >
@@ -312,17 +338,25 @@ const AdminPanel: React.FC = () => {
               )}
             </div>
           </form>
+          )}
 
           <ul className="divide-y divide-slate-100">
             {paginatedUsers.map(u => (
               <li key={u.id} className="py-3 flex justify-between items-center group">
-                <span className="text-slate-700 font-medium">{u.email}</span>
+                <div>
+                  <span className="text-slate-700 font-medium">{u.email}</span>
+                  <span className="ml-2 text-[10px] font-bold uppercase px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">
+                    {u.role}
+                  </span>
+                </div>
+                {currentUser?.role !== UserRole.VISOR && (
                 <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition">
                   <button
                     onClick={() => {
                       setEditingUser(u);
                       setNewUserEmail(u.email);
                       setNewUserPassword('');
+                      setNewUserRole(u.role);
                     }}
                     className="text-emerald-600 hover:text-emerald-800 text-sm font-bold"
                   >
@@ -335,6 +369,7 @@ const AdminPanel: React.FC = () => {
                     Eliminar
                   </button>
                 </div>
+                )}
               </li>
             ))}
             {users.length === 0 && (
