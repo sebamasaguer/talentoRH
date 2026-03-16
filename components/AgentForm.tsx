@@ -59,13 +59,14 @@ const AgentForm: React.FC<AgentFormProps> = ({ onSave, onCancel, initialData }) 
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="px-8 py-6 bg-slate-900 text-white flex justify-between items-center">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[95vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="px-8 py-6 bg-slate-900 text-white flex justify-between items-center flex-shrink-0">
           <h3 className="text-xl font-bold">{initialData ? 'Editar Entrevista' : 'Cargar Nueva Entrevista'}</h3>
           <button onClick={onCancel} className="text-slate-400 hover:text-white transition">✕</button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="overflow-y-auto flex-1">
+          <form onSubmit={handleSubmit} className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">ID Agente</label>
             <input 
@@ -175,22 +176,23 @@ const AgentForm: React.FC<AgentFormProps> = ({ onSave, onCancel, initialData }) 
             </label>
           </div>
 
-          <div className="md:col-span-2 flex justify-end gap-3 pt-6 border-t border-slate-100">
-            <button 
-              type="button" 
-              onClick={onCancel}
-              className="px-6 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition font-medium"
-            >
-              Cancelar
-            </button>
-            <button 
-              type="submit" 
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md shadow-blue-200 transition font-medium"
-            >
-              Guardar Cambios
-            </button>
-          </div>
-        </form>
+            <div className="md:col-span-2 flex justify-end gap-3 pt-6 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="px-6 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md shadow-blue-200 transition font-medium"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
