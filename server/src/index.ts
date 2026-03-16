@@ -53,6 +53,12 @@ const FunctionalProfileSchema = z.object({
   name: z.string().min(1)
 });
 
+const UserSchema = z.object({
+  id: z.number().optional(),
+  email: z.string().email(),
+  password: z.string().min(6).optional()
+});
+
 const AgentSchema = z.object({
   id: z.string(),
   fullName: z.string(),
@@ -170,6 +176,57 @@ app.delete('/api/profiles/:id', async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(400).json({ error: 'Cannot delete profile, it might be in use.' });
+  }
+});
+
+// Users
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, email: true },
+      orderBy: { email: 'asc' }
+    });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching users' });
+  }
+});
+
+app.post('/api/users', async (req, res) => {
+  try {
+    const data = UserSchema.parse(req.body);
+
+    if (!data.id && !data.password) {
+      return res.status(400).json({ error: 'La contraseña es obligatoria para nuevos usuarios.' });
+    }
+
+    const updateData: any = { email: data.email };
+    if (data.password) {
+      updateData.password = await bcrypt.hash(data.password, 10);
+    }
+
+    const user = await prisma.user.upsert({
+      where: { id: data.id || 0 },
+      update: updateData,
+      create: {
+        email: data.email,
+        password: updateData.password || '', // updateData.password is guaranteed if no id
+      },
+    });
+
+    const { password, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+  } catch (error) {
+    res.status(400).json({ error });
+  }
+});
+
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    await prisma.user.delete({ where: { id: parseInt(req.params.id) } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(400).json({ error: 'No se pudo eliminar el usuario.' });
   }
 });
 

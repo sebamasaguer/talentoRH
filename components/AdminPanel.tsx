@@ -1,25 +1,31 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Organization, FunctionalProfile } from '../types';
+import { Organization, FunctionalProfile, User } from '../types';
 import {
   getOrganizations, saveOrganization, deleteOrganization,
-  getProfiles, saveProfile, deleteProfile
+  getProfiles, saveProfile, deleteProfile,
+  getUsers, saveUser, deleteUser
 } from '../services/apiService';
 import Pagination from './Pagination';
 
 const AdminPanel: React.FC = () => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [profiles, setProfiles] = useState<FunctionalProfile[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
 
   const [newOrgName, setNewOrgName] = useState('');
   const [newProfileName, setNewProfileName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
 
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
   const [editingProfile, setEditingProfile] = useState<FunctionalProfile | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const itemsPerPage = 10;
   const [currentPageOrgs, setCurrentPageOrgs] = useState(1);
   const [currentPageProfiles, setCurrentPageProfiles] = useState(1);
+  const [currentPageUsers, setCurrentPageUsers] = useState(1);
 
   useEffect(() => {
     loadData();
@@ -27,12 +33,14 @@ const AdminPanel: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const [orgsData, profilesData] = await Promise.all([
+      const [orgsData, profilesData, usersData] = await Promise.all([
         getOrganizations(),
-        getProfiles()
+        getProfiles(),
+        getUsers()
       ]);
       setOrganizations(orgsData);
       setProfiles(profilesData);
+      setUsers(usersData);
     } catch (error) {
       console.error('Error loading admin data:', error);
     }
@@ -84,6 +92,34 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await saveUser({
+        id: editingUser?.id,
+        email: newUserEmail,
+        password: newUserPassword || undefined
+      });
+      setNewUserEmail('');
+      setNewUserPassword('');
+      setEditingUser(null);
+      loadData();
+    } catch (error: any) {
+      alert(error.message || 'Error saving user');
+    }
+  };
+
+  const handleDeleteUser = async (id: number) => {
+    if (confirm('¿Está seguro de eliminar este usuario?')) {
+      try {
+        await deleteUser(id);
+        loadData();
+      } catch (error: any) {
+        alert(error.message || 'Error deleting user');
+      }
+    }
+  };
+
   const paginatedOrgs = useMemo(() => {
     const start = (currentPageOrgs - 1) * itemsPerPage;
     return organizations.slice(start, start + itemsPerPage);
@@ -94,8 +130,13 @@ const AdminPanel: React.FC = () => {
     return profiles.slice(start, start + itemsPerPage);
   }, [profiles, currentPageProfiles]);
 
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPageUsers - 1) * itemsPerPage;
+    return users.slice(start, start + itemsPerPage);
+  }, [users, currentPageUsers]);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {/* Organizations CRUD */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
@@ -220,6 +261,88 @@ const AdminPanel: React.FC = () => {
             currentPage={currentPageProfiles}
             totalPages={Math.ceil(profiles.length / itemsPerPage)}
             onPageChange={setCurrentPageProfiles}
+          />
+        </div>
+      </div>
+
+      {/* Users CRUD */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+          <h3 className="font-bold text-slate-800 text-lg">Gestionar Usuarios</h3>
+        </div>
+        <div className="p-6">
+          <form onSubmit={handleSaveUser} className="flex flex-col gap-2 mb-6">
+            <input
+              type="email"
+              value={newUserEmail}
+              onChange={(e) => setNewUserEmail(e.target.value)}
+              placeholder="Email..."
+              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+              required
+            />
+            <input
+              type="password"
+              value={newUserPassword}
+              onChange={(e) => setNewUserPassword(e.target.value)}
+              placeholder={editingUser ? "Nueva contraseña (opcional)..." : "Contraseña..."}
+              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+              required={!editingUser}
+            />
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                className="flex-1 bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-700 transition"
+              >
+                {editingUser ? 'Actualizar' : 'Agregar'}
+              </button>
+              {editingUser && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingUser(null);
+                    setNewUserEmail('');
+                    setNewUserPassword('');
+                  }}
+                  className="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300 transition"
+                >
+                  X
+                </button>
+              )}
+            </div>
+          </form>
+
+          <ul className="divide-y divide-slate-100">
+            {paginatedUsers.map(u => (
+              <li key={u.id} className="py-3 flex justify-between items-center group">
+                <span className="text-slate-700 font-medium">{u.email}</span>
+                <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition">
+                  <button
+                    onClick={() => {
+                      setEditingUser(u);
+                      setNewUserEmail(u.email);
+                      setNewUserPassword('');
+                    }}
+                    className="text-emerald-600 hover:text-emerald-800 text-sm font-bold"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleDeleteUser(u.id)}
+                    className="text-red-600 hover:text-red-800 text-sm font-bold"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </li>
+            ))}
+            {users.length === 0 && (
+              <li className="py-8 text-center text-slate-400">No hay usuarios cargados.</li>
+            )}
+          </ul>
+          <Pagination
+            currentPage={currentPageUsers}
+            totalPages={Math.ceil(users.length / itemsPerPage)}
+            onPageChange={setCurrentPageUsers}
           />
         </div>
       </div>
