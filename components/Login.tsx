@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { login } from '../services/apiService';
 import logo from '../public/logorh.png';
+import { User } from '../types';
 interface LoginProps {
-  onLoginSuccess: (token: string) => void;
+  onLoginSuccess: (token: string, user: User) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
@@ -20,7 +21,8 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     try {
       const data = await login(email, password);
       localStorage.setItem('token', data.token);
-      onLoginSuccess(data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      onLoginSuccess(data.token, data.user);
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
     } finally {

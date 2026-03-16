@@ -81,8 +81,15 @@ model Match {
   @@index([positionId])
 }
 
+enum Role {
+  SUPERADMIN
+  ADMIN
+  VISOR
+}
+
 model User {
   id       Int    @id @default(autoincrement())
   email    String @unique
   password String
+  role     Role   @default(ADMIN)
 }

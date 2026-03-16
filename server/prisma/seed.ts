@@ -6,18 +6,37 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Start seeding...');
 
-  // 1. Admin User
-  const adminEmail = 'admin@talentohr.com';
-  const hashedPassword = await bcrypt.hash('admin123', 10);
-
-  await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: {},
-    create: {
-      email: adminEmail,
-      password: hashedPassword,
+  // 1. Users
+  const users = [
+    {
+      email: 'superadmin@talentohr.com',
+      password: 'superadmin123',
+      role: 'SUPERADMIN' as const,
     },
-  });
+    {
+      email: 'admin@talentohr.com',
+      password: 'admin123',
+      role: 'ADMIN' as const,
+    },
+    {
+      email: 'visor@talentohr.com',
+      password: 'visor123',
+      role: 'VISOR' as const,
+    },
+  ];
+
+  for (const userData of users) {
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    await prisma.user.upsert({
+      where: { email: userData.email },
+      update: { role: userData.role },
+      create: {
+        email: userData.email,
+        password: hashedPassword,
+        role: userData.role,
+      },
+    });
+  }
 
   // 2. Organizations
   const orgNames = [
