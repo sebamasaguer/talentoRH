@@ -136,9 +136,10 @@ const AdminPanel: React.FC = () => {
   }, [users, currentPageUsers]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {/* Organizations CRUD */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Organizations CRUD */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
           <h3 className="font-bold text-slate-800 text-lg">Gestionar Organismos</h3>
         </div>
@@ -201,72 +202,73 @@ const AdminPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Profiles CRUD */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
-          <h3 className="font-bold text-slate-800 text-lg">Gestionar Perfiles Funcionales</h3>
-        </div>
-        <div className="p-6">
-          <form onSubmit={handleSaveProfile} className="flex gap-2 mb-6">
-            <input
-              type="text"
-              value={newProfileName}
-              onChange={(e) => setNewProfileName(e.target.value)}
-              placeholder="Nombre del perfil..."
-              className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-              required
-            />
-            <button
-              type="submit"
-              className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition"
-            >
-              {editingProfile ? 'Actualizar' : 'Agregar'}
-            </button>
-            {editingProfile && (
+        {/* Profiles CRUD */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h3 className="font-bold text-slate-800 text-lg">Gestionar Perfiles Funcionales</h3>
+          </div>
+          <div className="p-6">
+            <form onSubmit={handleSaveProfile} className="flex gap-2 mb-6">
+              <input
+                type="text"
+                value={newProfileName}
+                onChange={(e) => setNewProfileName(e.target.value)}
+                placeholder="Nombre del perfil..."
+                className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                required
+              />
               <button
-                type="button"
-                onClick={() => { setEditingProfile(null); setNewProfileName(''); }}
-                className="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300 transition"
+                type="submit"
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition"
               >
-                X
+                {editingProfile ? 'Actualizar' : 'Agregar'}
               </button>
-            )}
-          </form>
+              {editingProfile && (
+                <button
+                  type="button"
+                  onClick={() => { setEditingProfile(null); setNewProfileName(''); }}
+                  className="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300 transition"
+                >
+                  X
+                </button>
+              )}
+            </form>
 
-          <ul className="divide-y divide-slate-100">
-            {paginatedProfiles.map(p => (
-              <li key={p.id} className="py-3 flex justify-between items-center group">
-                <span className="text-slate-700 font-medium">{p.name}</span>
-                <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition">
-                  <button
-                    onClick={() => { setEditingProfile(p); setNewProfileName(p.name); }}
-                    className="text-indigo-600 hover:text-indigo-800 text-sm font-bold"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleDeleteProfile(p.id)}
-                    className="text-red-600 hover:text-red-800 text-sm font-bold"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </li>
-            ))}
-            {profiles.length === 0 && (
-              <li className="py-8 text-center text-slate-400">No hay perfiles cargados.</li>
-            )}
-          </ul>
-          <Pagination
-            currentPage={currentPageProfiles}
-            totalPages={Math.ceil(profiles.length / itemsPerPage)}
-            onPageChange={setCurrentPageProfiles}
-          />
+            <ul className="divide-y divide-slate-100">
+              {paginatedProfiles.map(p => (
+                <li key={p.id} className="py-3 flex justify-between items-center group">
+                  <span className="text-slate-700 font-medium">{p.name}</span>
+                  <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition">
+                    <button
+                      onClick={() => { setEditingProfile(p); setNewProfileName(p.name); }}
+                      className="text-indigo-600 hover:text-indigo-800 text-sm font-bold"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProfile(p.id)}
+                      className="text-red-600 hover:text-red-800 text-sm font-bold"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </li>
+              ))}
+              {profiles.length === 0 && (
+                <li className="py-8 text-center text-slate-400">No hay perfiles cargados.</li>
+              )}
+            </ul>
+            <Pagination
+              currentPage={currentPageProfiles}
+              totalPages={Math.ceil(profiles.length / itemsPerPage)}
+              onPageChange={setCurrentPageProfiles}
+            />
+          </div>
         </div>
       </div>
 
       {/* Users CRUD */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden max-w-2xl">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
           <h3 className="font-bold text-slate-800 text-lg">Gestionar Usuarios</h3>
         </div>
