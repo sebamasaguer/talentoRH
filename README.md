@@ -80,5 +80,5 @@ Una vez que ambos servidores estén corriendo:
 *   **Frontend:** React + TypeScript + Tailwind CSS.
 *   **Backend:** Node.js + Express.
 *   **ORM:** Prisma (PostgreSQL).
-*   **IA:** Google Generative AI (Gemini 1.5 Flash).
+*   **IA:** Google Generative AI (Gemini 2.0 Flash).
 *   **Validación:** Zod.
